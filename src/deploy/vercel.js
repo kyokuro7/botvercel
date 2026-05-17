@@ -67,9 +67,18 @@ async function waitForVercelDeployment(deploymentId, token, maxAttempts = 30) {
       }
     );
 
-    const { readyState, url } = res.data;
+    const { readyState, url, alias } = res.data;
 
     if (readyState === 'READY') {
+      // Ambil alias production yang paling bersih (tanpa username scope)
+      // alias biasanya: ["nama-project.vercel.app", "nama-project-xxx-kyokuro7.vercel.app"]
+      // Pilih yang terpendek = paling bersih
+      if (alias && alias.length > 0) {
+        const cleanAlias = alias
+          .filter((a) => a.endsWith('.vercel.app'))
+          .sort((a, b) => a.length - b.length)[0];
+        if (cleanAlias) return `https://${cleanAlias}`;
+      }
       return `https://${url}`;
     }
 
