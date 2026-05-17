@@ -1,5 +1,4 @@
 const axios = require('axios');
-const FormData = require('form-data');
 const archiver = require('archiver');
 const { PassThrough } = require('stream');
 
@@ -17,23 +16,33 @@ async function deployToNetlify(projectName, htmlContent) {
   }
 
   // Bersihkan nama project
-  const cleanName = projectName
+  const baseName = projectName
     .toLowerCase()
     .replace(/[\s_]+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
-    .slice(0, 63);
+    .slice(0, 50);
+
+  // Tambahkan suffix acak agar nama unik secara global di Netlify
+  const randomSuffix = Math.random().toString(36).slice(2, 7);
+  const cleanName = `${baseName}-${randomSuffix}`;
 
   // Buat site baru di Netlify
-  const siteRes = await axios.post(
-    'https://api.netlify.com/api/v1/sites',
-    { name: cleanName },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
+  let siteRes;
+  try {
+    siteRes = await axios.post(
+      'https://api.netlify.com/api/v1/sites',
+      { name: cleanName },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  } catch (err) {
+    const msg = err.response?.data?.errors?.name?.[0] || err.message;
+    throw new Error(`Gagal membuat site Netlify: ${msg}`);
+  }
 
   const siteId = siteRes.data.id;
   const siteName = siteRes.data.name;
@@ -42,16 +51,24 @@ async function deployToNetlify(projectName, htmlContent) {
   const zipBuffer = await createZipFromHtml(htmlContent);
 
   // Upload zip ke Netlify sebagai deployment
-  await axios.post(
-    `https://api.netlify.com/api/v1/sites/${siteId}/deploys`,
-    zipBuffer,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/zip',
-      },
-    }
-  );
+  try {
+    await axios.post(
+      `https://api.netlify.com/api/v1/sites/${siteId}/deploys`,
+      zipBuffer,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/zip',
+          'Content-Length': zipBuffer.length,
+        },
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+      }
+    );
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message;
+    throw new Error(`Gagal upload ke Netlify: ${msg}`);
+  }
 
   const url = `https://${siteName}.netlify.app`;
   return { url };
