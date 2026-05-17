@@ -50,11 +50,11 @@ module.exports = function manageCommand(bot) {
         return ctx.editMessageText('📭 Tidak ada project Vercel yang ditemukan.');
       }
 
-      const buttons = projects.map((p) => [
-        Markup.button.callback(
-          `🔺 ${p.name}`,
-          `mgr_project_${p.id}__${p.name}__${encodeURIComponent(p.url || '')}`
-        ),
+      // Simpan list project di session, button cukup pakai index
+      ctx.session.manageProjectList = projects;
+
+      const buttons = projects.map((p, i) => [
+        Markup.button.callback(`🔺 ${p.name}`, `mgr_pick_${i}`),
       ]);
       buttons.push([Markup.button.callback('❌ Batal', 'mgr_cancel')]);
 
@@ -80,11 +80,11 @@ module.exports = function manageCommand(bot) {
         return ctx.editMessageText('📭 Tidak ada site Netlify yang ditemukan.');
       }
 
-      const buttons = sites.map((s) => [
-        Markup.button.callback(
-          `🟩 ${s.name}`,
-          `mgr_project_${s.id}__${s.name}__${encodeURIComponent(s.url || '')}`
-        ),
+      // Simpan list site di session, button cukup pakai index
+      ctx.session.manageProjectList = sites;
+
+      const buttons = sites.map((s, i) => [
+        Markup.button.callback(`🟩 ${s.name}`, `mgr_pick_${i}`),
       ]);
       buttons.push([Markup.button.callback('❌ Batal', 'mgr_cancel')]);
 
@@ -98,24 +98,26 @@ module.exports = function manageCommand(bot) {
   });
 
   // =====================
-  // Pilih project → tampilkan menu kelola
+  // Pilih project berdasarkan index → tampilkan menu kelola
   // =====================
-  bot.action(/^mgr_project_(.+)__(.+)__(.*)$/, (ctx) => {
-    const projectId = ctx.match[1];
-    const projectName = ctx.match[2];
-    const projectUrl = decodeURIComponent(ctx.match[3]);
+  bot.action(/^mgr_pick_(\d+)$/, (ctx) => {
+    const index = parseInt(ctx.match[1]);
+    const project = ctx.session.manageProjectList?.[index];
+    if (!project) return ctx.editMessageText('❌ Project tidak ditemukan, coba lagi.');
+
     const platform = ctx.session.managePlatform;
 
-    ctx.session.manageProjectId = projectId;
-    ctx.session.manageProjectName = projectName;
-    ctx.session.manageProjectUrl = projectUrl;
+    // Simpan project terpilih ke session
+    ctx.session.manageProjectId = project.id;
+    ctx.session.manageProjectName = project.name;
+    ctx.session.manageProjectUrl = project.url || '';
 
     const platformLabel = platform === 'vercel' ? '🔺 Vercel' : '🟩 Netlify';
 
     ctx.editMessageText(
       `⚙️ *Kelola Project*\n\n` +
         `Platform: *${platformLabel}*\n` +
-        `Project: *${projectName}*\n\n` +
+        `Project: *${project.name}*\n\n` +
         `Pilih aksi:`,
       {
         parse_mode: 'Markdown',
@@ -143,8 +145,33 @@ module.exports = function manageCommand(bot) {
         `${manageProjectUrl || 'URL tidak tersedia'}`,
       {
         parse_mode: 'Markdown',
+        // Tombol kembali pakai mgr_back, data project sudah ada di session
         ...Markup.inlineKeyboard([
-          [Markup.button.callback('🔙 Kembali', `mgr_project_${ctx.session.manageProjectId}__${manageProjectName}__${encodeURIComponent(manageProjectUrl || '')}`)],
+          [Markup.button.callback('🔙 Kembali', 'mgr_back')],
+        ]),
+      }
+    );
+  });
+
+  // =====================
+  // Tombol kembali ke menu kelola
+  // =====================
+  bot.action('mgr_back', (ctx) => {
+    const { managePlatform, manageProjectName, manageProjectUrl } = ctx.session;
+    const platformLabel = managePlatform === 'vercel' ? '🔺 Vercel' : '🟩 Netlify';
+
+    ctx.editMessageText(
+      `⚙️ *Kelola Project*\n\n` +
+        `Platform: *${platformLabel}*\n` +
+        `Project: *${manageProjectName}*\n\n` +
+        `Pilih aksi:`,
+      {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback('🔄 Update File', 'mgr_action_update')],
+          [Markup.button.callback('✏️ Ganti Nama', 'mgr_action_rename')],
+          [Markup.button.callback('🔗 Lihat URL', 'mgr_action_url')],
+          [Markup.button.callback('❌ Batal', 'mgr_cancel')],
         ]),
       }
     );

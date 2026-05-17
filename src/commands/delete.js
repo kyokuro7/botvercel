@@ -40,9 +40,12 @@ module.exports = function deleteCommand(bot) {
         return ctx.editMessageText('📭 Tidak ada project Vercel yang ditemukan.');
       }
 
+      // Simpan list di session, button pakai index
+      ctx.session.deleteProjectList = projects;
       ctx.session.deleteState = 'waiting_project_select';
-      const buttons = projects.map((p) => [
-        Markup.button.callback(`🔺 ${p.name}`, `del_project_${p.id}__${p.name}`),
+
+      const buttons = projects.map((p, i) => [
+        Markup.button.callback(`🔺 ${p.name}`, `del_pick_${i}`),
       ]);
       buttons.push([Markup.button.callback('❌ Batal', 'del_cancel')]);
 
@@ -68,9 +71,12 @@ module.exports = function deleteCommand(bot) {
         return ctx.editMessageText('📭 Tidak ada site Netlify yang ditemukan.');
       }
 
+      // Simpan list di session, button pakai index
+      ctx.session.deleteProjectList = sites;
       ctx.session.deleteState = 'waiting_project_select';
-      const buttons = sites.map((s) => [
-        Markup.button.callback(`🟩 ${s.name}`, `del_project_${s.id}__${s.name}`),
+
+      const buttons = sites.map((s, i) => [
+        Markup.button.callback(`🟩 ${s.name}`, `del_pick_${i}`),
       ]);
       buttons.push([Markup.button.callback('❌ Batal', 'del_cancel')]);
 
@@ -84,15 +90,18 @@ module.exports = function deleteCommand(bot) {
   });
 
   // =====================
-  // Pilih project yang akan dihapus → tampilkan konfirmasi
+  // Pilih project berdasarkan index → tampilkan konfirmasi
   // =====================
-  bot.action(/^del_project_(.+)__(.+)$/, (ctx) => {
-    const projectId = ctx.match[1];
-    const projectName = ctx.match[2];
+  bot.action(/^del_pick_(\d+)$/, (ctx) => {
+    const index = parseInt(ctx.match[1]);
+    const project = ctx.session.deleteProjectList?.[index];
+    if (!project) return ctx.editMessageText('❌ Project tidak ditemukan, coba lagi.');
+
     const platform = ctx.session.deletePlatform;
 
-    ctx.session.deleteProjectId = projectId;
-    ctx.session.deleteProjectName = projectName;
+    // Simpan project terpilih ke session
+    ctx.session.deleteProjectId = project.id;
+    ctx.session.deleteProjectName = project.name;
     ctx.session.deleteState = 'waiting_confirm';
 
     const platformLabel = platform === 'vercel' ? '🔺 Vercel' : '🟩 Netlify';
@@ -100,7 +109,7 @@ module.exports = function deleteCommand(bot) {
     ctx.editMessageText(
       `⚠️ *Konfirmasi Hapus*\n\n` +
         `Platform: *${platformLabel}*\n` +
-        `Project: *${projectName}*\n\n` +
+        `Project: *${project.name}*\n\n` +
         `Yakin ingin menghapus project ini?\n` +
         `_Tindakan ini tidak bisa dibatalkan!_`,
       {
