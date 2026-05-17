@@ -1,9 +1,8 @@
 const axios = require('axios');
-const archiver = require('archiver');
-const { PassThrough } = require('stream');
+const crypto = require('crypto');
 
 /**
- * Deploy HTML ke Netlify menggunakan Netlify API
+ * Deploy HTML ke Netlify menggunakan Netlify File Digest API
  * @param {string} projectName - Nama project/site
  * @param {string} htmlContent - Konten file HTML
  * @returns {Promise<{url: string}>}
@@ -26,74 +25,70 @@ async function deployToNetlify(projectName, htmlContent) {
   const randomSuffix = Math.random().toString(36).slice(2, 7);
   const cleanName = `${baseName}-${randomSuffix}`;
 
-  // Buat site baru di Netlify
-  let siteRes;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+
+  // 1. Buat site baru di Netlify
+  let siteId, siteName;
   try {
-    siteRes = await axios.post(
+    const siteRes = await axios.post(
       'https://api.netlify.com/api/v1/sites',
       { name: cleanName },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
+      { headers }
     );
+    siteId = siteRes.data.id;
+    siteName = siteRes.data.name;
   } catch (err) {
     const msg = err.response?.data?.errors?.name?.[0] || err.message;
     throw new Error(`Gagal membuat site Netlify: ${msg}`);
   }
 
-  const siteId = siteRes.data.id;
-  const siteName = siteRes.data.name;
+  // 2. Hitung SHA1 dari isi index.html
+  const htmlBuffer = Buffer.from(htmlContent, 'utf-8');
+  const sha1 = crypto.createHash('sha1').update(htmlBuffer).digest('hex');
 
-  // Buat zip buffer dari HTML
-  const zipBuffer = await createZipFromHtml(htmlContent);
-
-  // Upload zip ke Netlify sebagai deployment
+  // 3. Buat deployment dengan file digest
+  let deployId, requiredFiles;
   try {
-    await axios.post(
+    const deployRes = await axios.post(
       `https://api.netlify.com/api/v1/sites/${siteId}/deploys`,
-      zipBuffer,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/zip',
-          'Content-Length': zipBuffer.length,
-        },
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity,
-      }
+        files: { '/index.html': sha1 },
+        async: false,
+      },
+      { headers }
     );
+    deployId = deployRes.data.id;
+    requiredFiles = deployRes.data.required || [];
   } catch (err) {
     const msg = err.response?.data?.message || err.message;
-    throw new Error(`Gagal upload ke Netlify: ${msg}`);
+    throw new Error(`Gagal membuat deployment Netlify: ${msg}`);
+  }
+
+  // 4. Upload index.html jika diminta Netlify
+  if (requiredFiles.includes(sha1)) {
+    try {
+      await axios.put(
+        `https://api.netlify.com/api/v1/deploys/${deployId}/files/index.html`,
+        htmlBuffer,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/octet-stream',
+          },
+          maxBodyLength: Infinity,
+        }
+      );
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message;
+      throw new Error(`Gagal upload file ke Netlify: ${msg}`);
+    }
   }
 
   const url = `https://${siteName}.netlify.app`;
   return { url };
-}
-
-/**
- * Buat zip buffer yang berisi index.html dari htmlContent
- */
-function createZipFromHtml(htmlContent) {
-  return new Promise((resolve, reject) => {
-    const buffers = [];
-    const passThrough = new PassThrough();
-
-    passThrough.on('data', (chunk) => buffers.push(chunk));
-    passThrough.on('end', () => resolve(Buffer.concat(buffers)));
-    passThrough.on('error', reject);
-
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    archive.on('error', reject);
-    archive.pipe(passThrough);
-
-    // Tambahkan index.html ke dalam zip
-    archive.append(htmlContent, { name: 'index.html' });
-    archive.finalize();
-  });
 }
 
 module.exports = { deployToNetlify };
