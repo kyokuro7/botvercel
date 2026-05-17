@@ -12,7 +12,8 @@
     "axios": "^1.7.2",
     "form-data": "^4.0.0",
     "dotenv": "^16.4.5",
-    "archiver": "^7.0.1"
+    "archiver": "^7.0.1",
+    "jszip": "^3.10.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"

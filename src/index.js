@@ -1,18 +1,18 @@
 require('dotenv').config();
 const { Telegraf, session } = require('telegraf');
 const deployCommand = require('./commands/deploy');
+const deleteCommand = require('./commands/delete');
+const manageCommand = require('./commands/manage');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const OWNER_ID = parseInt(process.env.OWNER_ID, 10);
 
-// Setup session untuk menyimpan state percakapan
+// Setup session
 bot.use(session());
 
 // Inisialisasi session default
 bot.use((ctx, next) => {
-  if (!ctx.session) {
-    ctx.session = {};
-  }
+  if (!ctx.session) ctx.session = {};
   return next();
 });
 
@@ -39,8 +39,11 @@ bot.start((ctx) => {
     `Aku adalah bot deploy otomatis\\. Aku bisa membantu kamu deploy website ke:\n\n` +
     `• 🔺 *Vercel*\n` +
     `• 🟩 *Netlify*\n\n` +
-    `Ketik /deploy untuk mulai deploy website kamu\\!\n` +
-    `Ketik /help untuk melihat daftar perintah\\.`,
+    `*Perintah tersedia:*\n` +
+    `/deploy \\- Deploy website baru\n` +
+    `/manage \\- Kelola project \\(update, rename, lihat URL\\)\n` +
+    `/delete \\- Hapus project\n` +
+    `/help \\- Bantuan lengkap`,
     { parse_mode: 'MarkdownV2' }
   );
 });
@@ -49,21 +52,27 @@ bot.start((ctx) => {
 bot.help((ctx) => {
   ctx.reply(
     `📋 *Daftar Perintah:*\n\n` +
-    `/start \\- Mulai bot\n` +
-    `/deploy \\- Deploy website ke Vercel atau Netlify\n` +
+    `🚀 /deploy \\- Deploy website baru ke Vercel atau Netlify\n` +
+    `⚙️ /manage \\- Kelola project \\(update file, ganti nama, lihat URL\\)\n` +
+    `🗑️ /delete \\- Hapus project dari Vercel atau Netlify\n` +
     `/help \\- Tampilkan bantuan ini\n\n` +
+    `*Format file yang didukung:*\n` +
+    `• 📄 *.html* \\- Halaman tunggal\n` +
+    `• 📦 *.zip* \\- Multi\\-file \\(HTML \\+ CSS \\+ JS \\+ gambar, dll\\)\n\n` +
     `*Cara pakai /deploy:*\n` +
     `1\\. Ketik /deploy\n` +
-    `2\\. Pilih platform \\(Vercel atau Netlify\\)\n` +
+    `2\\. Pilih platform\n` +
     `3\\. Masukkan nama project\n` +
-    `4\\. Kirim file HTML kamu\n` +
+    `4\\. Kirim file \\.html atau \\.zip\n` +
     `5\\. Tunggu URL website mu jadi\\! 🚀`,
     { parse_mode: 'MarkdownV2' }
   );
 });
 
-// Register deploy command dan handler
+// Register semua command
 deployCommand(bot);
+deleteCommand(bot);
+manageCommand(bot);
 
 // Error handler
 bot.catch((err, ctx) => {
