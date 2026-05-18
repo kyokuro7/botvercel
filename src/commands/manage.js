@@ -122,16 +122,22 @@ module.exports = function manageCommand(bot) {
 
     ctx.editMessageText(
       `⚙️ *Kelola Project*\n\n` +
-        `Platform: *${platformLabel}*\n` +
-        `Project: *${project.name}*\n\n` +
-        `Pilih aksi:`,
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `🌐 *Platform:* ${platformLabel}\n` +
+        `📦 *Project:* ${project.name}\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `Pilih aksi yang ingin kamu lakukan:`,
       {
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
-          [Markup.button.callback('🔄 Update File', 'mgr_action_update')],
-          [Markup.button.callback('✏️ Ganti Nama', 'mgr_action_rename')],
-          [Markup.button.callback('🌐 Custom Domain', 'mgr_action_domain')],
-          [Markup.button.callback('🔗 Lihat URL', 'mgr_action_url')],
+          [
+            Markup.button.callback('🔄 Update File', 'mgr_action_update'),
+            Markup.button.callback('✏️ Ganti Nama', 'mgr_action_rename'),
+          ],
+          [
+            Markup.button.callback('🌐 Custom Domain', 'mgr_action_domain'),
+            Markup.button.callback('🔗 Lihat URL', 'mgr_action_url'),
+          ],
           [Markup.button.callback('❌ Batal', 'mgr_cancel')],
         ]),
       }
@@ -147,12 +153,13 @@ module.exports = function manageCommand(bot) {
 
     ctx.editMessageText(
       `🔗 *URL Project*\n\n` +
-        `Platform: *${platformLabel}*\n` +
-        `Project: *${manageProjectName}*\n\n` +
-        `${manageProjectUrl || 'URL tidak tersedia'}`,
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `🌐 *Platform:* ${platformLabel}\n` +
+        `📦 *Project:* ${manageProjectName}\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `🌍 *Website URL:*\n${manageProjectUrl || 'URL tidak tersedia'}`,
       {
         parse_mode: 'Markdown',
-        // Tombol kembali pakai mgr_back, data project sudah ada di session
         ...Markup.inlineKeyboard([
           [Markup.button.callback('🔙 Kembali', 'mgr_back')],
         ]),
@@ -169,16 +176,22 @@ module.exports = function manageCommand(bot) {
 
     ctx.editMessageText(
       `⚙️ *Kelola Project*\n\n` +
-        `Platform: *${platformLabel}*\n` +
-        `Project: *${manageProjectName}*\n\n` +
-        `Pilih aksi:`,
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `🌐 *Platform:* ${platformLabel}\n` +
+        `📦 *Project:* ${manageProjectName}\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `Pilih aksi yang ingin kamu lakukan:`,
       {
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
-          [Markup.button.callback('🔄 Update File', 'mgr_action_update')],
-          [Markup.button.callback('✏️ Ganti Nama', 'mgr_action_rename')],
-          [Markup.button.callback('🌐 Custom Domain', 'mgr_action_domain')],
-          [Markup.button.callback('🔗 Lihat URL', 'mgr_action_url')],
+          [
+            Markup.button.callback('🔄 Update File', 'mgr_action_update'),
+            Markup.button.callback('✏️ Ganti Nama', 'mgr_action_rename'),
+          ],
+          [
+            Markup.button.callback('🌐 Custom Domain', 'mgr_action_domain'),
+            Markup.button.callback('🔗 Lihat URL', 'mgr_action_url'),
+          ],
           [Markup.button.callback('❌ Batal', 'mgr_cancel')],
         ]),
       }
@@ -244,8 +257,10 @@ module.exports = function manageCommand(bot) {
 
       ctx.editMessageText(
         `🌐 *Custom Domain*\n\n` +
-          `Platform: *${platformLabel}*\n` +
-          `Project: *${manageProjectName}*\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `🌐 *Platform:* ${platformLabel}\n` +
+          `📦 *Project:* ${manageProjectName}\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n\n` +
           `*Domain terpasang:*\n${domainText}\n\n` +
           `Pilih aksi:`,
         {
@@ -436,19 +451,23 @@ module.exports = function manageCommand(bot) {
         const rootDomain = domain.split('.').slice(1).join('.');
 
         ctx.reply(
-          `✅ *Domain berhasil ditambahkan!*\n\n` +
-            `Platform: *${platformLabel}*\n` +
-            `Project: *${manageProjectName}*\n` +
-            `Domain: \`${domain}\`\n\n` +
-            `━━━━━━━━━━━━━━━━━━━━\n` +
-            `📋 *Set DNS record ini di panel clouden.id kamu:*\n\n` +
-            `• Type  : \`CNAME\`\n` +
-            `• Name  : \`${subdomain}\`\n` +
-            `• Value : \`${result.cname}\`\n` +
-            `• TTL   : \`Auto\` atau \`3600\`\n\n` +
-            `━━━━━━━━━━━━━━━━━━━━\n` +
-            `⏱️ Setelah DNS propagasi _(5\\-30 menit)_, website kamu bisa diakses di:\n` +
-            `🔗 https://${domain}`,
+          `✅ *Domain berhasil ditambahkan\\!*\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n\n` +
+            `🌐 *Platform:* ${platformLabel}\n` +
+            `📦 *Project:* ${manageProjectName}\n` +
+            `🔗 *Domain:* \`${domain}\`\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n\n` +
+            `📋 *Pengaturan DNS di clouden\\.id:*\n\n` +
+            `\`\`\`\n` +
+            `Type  : CNAME\n` +
+            `Name  : ${subdomain}\n` +
+            `Value : ${result.cname}\n` +
+            `TTL   : Auto / 3600\n` +
+            `\`\`\`\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n\n` +
+            `⏱️ *Waktu propagasi:* 5\\-30 menit\n\n` +
+            `🌍 *Website akan aktif di:*\n` +
+            `https://${domain}`,
           { parse_mode: 'Markdown' }
         );
       } catch (err) {

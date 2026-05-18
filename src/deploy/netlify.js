@@ -204,10 +204,10 @@ async function addNetlifyDomain(siteId, domain) {
   });
   const siteName = siteRes.data.name;
 
-  // Tambahkan custom domain ke site
+  // Tambahkan custom domain ke site - gunakan endpoint yang benar
   try {
     await axios.post(
-      `${BASE_URL}/sites/${siteId}/domain_aliases`,
+      `${BASE_URL}/sites/${siteId}/domains`,
       { domain },
       { headers: getHeaders(token) }
     );
@@ -231,7 +231,7 @@ async function removeNetlifyDomain(siteId, domain) {
 
   try {
     await axios.delete(
-      `${BASE_URL}/sites/${siteId}/domain_aliases/${domain}`,
+      `${BASE_URL}/sites/${siteId}/domains/${domain}`,
       { headers: getHeaders(token) }
     );
   } catch (err) {
@@ -251,9 +251,13 @@ async function listNetlifyDomains(siteId) {
     headers: getHeaders(token),
   });
 
-  return (res.data.domain_aliases || []).filter(
+  // Ambil custom domains dari response
+  const customDomains = res.data.custom_domain ? [res.data.custom_domain] : [];
+  const domainAliases = (res.data.domain_aliases || []).filter(
     (d) => !d.endsWith('.netlify.app')
   );
+
+  return [...customDomains, ...domainAliases];
 }
 
 module.exports = {

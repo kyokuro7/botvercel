@@ -13,7 +13,8 @@ module.exports = function deployCommand(bot) {
     ctx.session.projectName = null;
 
     ctx.reply(
-      '🚀 *Deploy Website*\n\nPilih platform yang ingin kamu gunakan:',
+      '🚀 *Deploy Website*\n\n' +
+      'Pilih platform yang ingin kamu gunakan:',
       {
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
@@ -35,7 +36,13 @@ module.exports = function deployCommand(bot) {
     ctx.session.deployState = 'waiting_project_name';
 
     ctx.editMessageText(
-      '🔺 *Vercel* dipilih!\n\nSekarang, ketik *nama project* kamu:\n_(contoh: my-website, portofolio, landing-page)_',
+      '🔺 *Vercel* dipilih\\!\n\n' +
+      '━━━━━━━━━━━━━━━━━━━━\n\n' +
+      'Sekarang, ketik *nama project* kamu:\n\n' +
+      '📝 Contoh:\n' +
+      '• `my-website`\n' +
+      '• `portofolio`\n' +
+      '• `landing-page`',
       { parse_mode: 'Markdown' }
     );
   });
@@ -48,7 +55,13 @@ module.exports = function deployCommand(bot) {
     ctx.session.deployState = 'waiting_project_name';
 
     ctx.editMessageText(
-      '🟩 *Netlify* dipilih!\n\nSekarang, ketik *nama project* kamu:\n_(contoh: my-website, portofolio, landing-page)_',
+      '🟩 *Netlify* dipilih\\!\n\n' +
+      '━━━━━━━━━━━━━━━━━━━━\n\n' +
+      'Sekarang, ketik *nama project* kamu:\n\n' +
+      '📝 Contoh:\n' +
+      '• `my-website`\n' +
+      '• `portofolio`\n' +
+      '• `landing-page`',
       { parse_mode: 'Markdown' }
     );
   });
@@ -71,10 +84,14 @@ module.exports = function deployCommand(bot) {
     const platform = ctx.session.platform === 'vercel' ? '🔺 Vercel' : '🟩 Netlify';
 
     ctx.reply(
-      `✅ Nama project: *${projectName}*\nPlatform: *${platform}*\n\n` +
-        `Sekarang kirim file kamu:\n` +
-        `• 📄 File *.html* — untuk halaman tunggal\n` +
-        `• 📦 File *.zip* — untuk multi-file _(HTML + CSS + JS + gambar, dll)_`,
+      `✅ *Nama project:* ${projectName}\n` +
+      `🌐 *Platform:* ${platform}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `📤 *Kirim file kamu:*\n\n` +
+      `• 📄 File *\\.html* — halaman tunggal\n` +
+      `• 📦 File *\\.zip* — multi\\-file\n` +
+      `  _(HTML \\+ CSS \\+ JS \\+ gambar)_\n\n` +
+      `⚡ Siap untuk di\\-deploy\\!`,
       { parse_mode: 'Markdown' }
     );
   });
@@ -146,7 +163,6 @@ module.exports = function deployCommand(bot) {
         }
       }
 
-      // Reset session
       ctx.session.deployState = null;
       ctx.session.platform = null;
       ctx.session.projectName = null;
@@ -154,12 +170,14 @@ module.exports = function deployCommand(bot) {
       await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
 
       ctx.reply(
-        `✅ *Deploy Berhasil!*\n\n` +
-          `📦 Project: *${projectName}*\n` +
-          `🌐 Platform: *${platformLabel}*\n` +
-          `📁 Tipe: *${fileType}*\n\n` +
-          `🔗 URL Website kamu:\n${result.url}\n\n` +
-          `_Selamat! Website kamu sudah live_ 🎉`,
+        `✅ *Deploy Berhasil\\!*\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `📦 *Project:* ${projectName}\n` +
+          `🌐 *Platform:* ${platformLabel}\n` +
+          `📁 *Tipe:* ${fileType}\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `🔗 *URL Website:*\n${result.url}\n\n` +
+          `🎉 _Website kamu sudah live\\!_`,
         { parse_mode: 'Markdown' }
       );
     } catch (err) {
