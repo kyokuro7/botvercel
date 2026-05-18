@@ -4,11 +4,17 @@ const {
   listVercelProjects,
   renameVercelProject,
   updateVercelProject,
+  addVercelDomain,
+  removeVercelDomain,
+  listVercelDomains,
 } = require('../deploy/vercel');
 const {
   listNetlifySites,
   renameNetlifySite,
   updateNetlifySite,
+  addNetlifyDomain,
+  removeNetlifyDomain,
+  listNetlifyDomains,
 } = require('../deploy/netlify');
 
 module.exports = function manageCommand(bot) {
@@ -124,6 +130,7 @@ module.exports = function manageCommand(bot) {
         ...Markup.inlineKeyboard([
           [Markup.button.callback('🔄 Update File', 'mgr_action_update')],
           [Markup.button.callback('✏️ Ganti Nama', 'mgr_action_rename')],
+          [Markup.button.callback('🌐 Custom Domain', 'mgr_action_domain')],
           [Markup.button.callback('🔗 Lihat URL', 'mgr_action_url')],
           [Markup.button.callback('❌ Batal', 'mgr_cancel')],
         ]),
@@ -170,6 +177,7 @@ module.exports = function manageCommand(bot) {
         ...Markup.inlineKeyboard([
           [Markup.button.callback('🔄 Update File', 'mgr_action_update')],
           [Markup.button.callback('✏️ Ganti Nama', 'mgr_action_rename')],
+          [Markup.button.callback('🌐 Custom Domain', 'mgr_action_domain')],
           [Markup.button.callback('🔗 Lihat URL', 'mgr_action_url')],
           [Markup.button.callback('❌ Batal', 'mgr_cancel')],
         ]),
@@ -212,47 +220,246 @@ module.exports = function manageCommand(bot) {
   });
 
   // =====================
-  // Handler teks: terima nama baru
+  // Aksi: Custom Domain
   // =====================
-  bot.on('text', async (ctx, next) => {
-    if (ctx.session.manageState !== 'waiting_new_name') return next();
-
-    const newName = ctx.message.text.trim();
-    if (!newName || newName.startsWith('/')) return next();
-    if (newName.length < 2) {
-      return ctx.reply('⚠️ Nama terlalu pendek. Minimal 2 karakter!');
-    }
-
+  bot.action('mgr_action_domain', async (ctx) => {
     const { managePlatform, manageProjectId, manageProjectName } = ctx.session;
-    const loadingMsg = await ctx.reply('⏳ Mengganti nama project...');
+    const platformLabel = managePlatform === 'vercel' ? '🔺 Vercel' : '🟩 Netlify';
+
+    await ctx.editMessageText('⏳ Mengambil daftar domain...');
 
     try {
-      let result;
+      let domains;
       if (managePlatform === 'vercel') {
-        result = await renameVercelProject(manageProjectId, newName);
+        domains = await listVercelDomains(manageProjectId);
       } else {
-        result = await renameNetlifySite(manageProjectId, newName);
+        domains = await listNetlifyDomains(manageProjectId);
       }
 
-      ctx.session.manageState = null;
-      ctx.session.manageProjectName = result.name;
-      if (result.url) ctx.session.manageProjectUrl = result.url;
+      ctx.session.manageDomainList = domains;
 
-      await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
+      let domainText = domains.length > 0
+        ? domains.map((d, i) => `${i + 1}. \`${d}\``).join('\n')
+        : '_Belum ada custom domain_';
 
-      const platformLabel = managePlatform === 'vercel' ? '🔺 Vercel' : '🟩 Netlify';
-      ctx.reply(
-        `✅ *Nama berhasil diubah!*\n\n` +
+      ctx.editMessageText(
+        `🌐 *Custom Domain*\n\n` +
           `Platform: *${platformLabel}*\n` +
-          `Nama lama: *${manageProjectName}*\n` +
-          `Nama baru: *${result.name}*`,
+          `Project: *${manageProjectName}*\n\n` +
+          `*Domain terpasang:*\n${domainText}\n\n` +
+          `Pilih aksi:`,
+        {
+          parse_mode: 'Markdown',
+          ...Markup.inlineKeyboard([
+            [Markup.button.callback('➕ Tambah Domain', 'mgr_domain_add')],
+            ...(domains.length > 0 ? [[Markup.button.callback('🗑️ Hapus Domain', 'mgr_domain_remove')]] : []),
+            [Markup.button.callback('🔙 Kembali', 'mgr_back')],
+          ]),
+        }
+      );
+    } catch (err) {
+      ctx.editMessageText(`❌ Gagal mengambil domain: ${err.message}`);
+    }
+  });
+
+  // =====================
+  // Aksi: Tambah Domain
+  // =====================
+  bot.action('mgr_domain_add', (ctx) => {
+    ctx.session.manageState = 'waiting_domain_add';
+    const platformLabel = ctx.session.managePlatform === 'vercel' ? '🔺 Vercel' : '🟩 Netlify';
+
+    ctx.editMessageText(
+      `➕ *Tambah Custom Domain*\n\n` +
+        `Platform: *${platformLabel}*\n` +
+        `Project: *${ctx.session.manageProjectName}*\n\n` +
+        `Ketik subdomain atau domain kamu:\n` +
+        `_(contoh: \`blog.namadomain.com\` atau \`namadomain.com\`)_`,
+      { parse_mode: 'Markdown' }
+    );
+  });
+
+  // =====================
+  // Aksi: Hapus Domain (tampilkan daftar untuk dipilih)
+  // =====================
+  bot.action('mgr_domain_remove', (ctx) => {
+    const domains = ctx.session.manageDomainList || [];
+
+    if (domains.length === 0) {
+      return ctx.editMessageText('📭 Tidak ada custom domain yang bisa dihapus.');
+    }
+
+    const buttons = domains.map((d, i) => [
+      Markup.button.callback(`🗑️ ${d}`, `mgr_domain_del_${i}`),
+    ]);
+    buttons.push([Markup.button.callback('🔙 Kembali', 'mgr_action_domain')]);
+
+    ctx.editMessageText(
+      `🗑️ *Hapus Custom Domain*\n\nPilih domain yang ingin dihapus:`,
+      { parse_mode: 'Markdown', ...Markup.inlineKeyboard(buttons) }
+    );
+  });
+
+  // =====================
+  // Konfirmasi hapus domain berdasarkan index
+  // =====================
+  bot.action(/^mgr_domain_del_(\d+)$/, async (ctx) => {
+    const index = parseInt(ctx.match[1]);
+    const domain = ctx.session.manageDomainList?.[index];
+    if (!domain) return ctx.editMessageText('❌ Domain tidak ditemukan.');
+
+    ctx.session.manageDomainToDelete = domain;
+
+    ctx.editMessageText(
+      `⚠️ *Konfirmasi Hapus Domain*\n\n` +
+        `Domain: \`${domain}\`\n\n` +
+        `Yakin ingin menghapus domain ini?`,
+      {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+          [
+            Markup.button.callback('✅ Ya, Hapus!', 'mgr_domain_del_confirm'),
+            Markup.button.callback('❌ Batal', 'mgr_action_domain'),
+          ],
+        ]),
+      }
+    );
+  });
+
+  // =====================
+  // Eksekusi hapus domain
+  // =====================
+  bot.action('mgr_domain_del_confirm', async (ctx) => {
+    const { managePlatform, manageProjectId, manageDomainToDelete } = ctx.session;
+    await ctx.editMessageText('⏳ Menghapus domain...');
+
+    try {
+      if (managePlatform === 'vercel') {
+        await removeVercelDomain(manageProjectId, manageDomainToDelete);
+      } else {
+        await removeNetlifyDomain(manageProjectId, manageDomainToDelete);
+      }
+
+      ctx.session.manageDomainToDelete = null;
+      const platformLabel = managePlatform === 'vercel' ? '🔺 Vercel' : '🟩 Netlify';
+
+      ctx.editMessageText(
+        `✅ *Domain berhasil dihapus!*\n\n` +
+          `Platform: *${platformLabel}*\n` +
+          `Domain: \`${manageDomainToDelete}\``,
         { parse_mode: 'Markdown' }
       );
     } catch (err) {
-      await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id).catch(() => {});
-      ctx.session.manageState = null;
-      ctx.reply(`❌ Gagal mengganti nama: ${err.message}`);
+      ctx.session.manageDomainToDelete = null;
+      ctx.editMessageText(`❌ Gagal menghapus domain: ${err.message}`);
     }
+  });
+
+  // =====================
+  // Handler teks: terima nama baru atau domain baru
+  // =====================
+  bot.on('text', async (ctx, next) => {
+    const state = ctx.session.manageState;
+
+    // ── Ganti nama ──
+    if (state === 'waiting_new_name') {
+      const newName = ctx.message.text.trim();
+      if (!newName || newName.startsWith('/')) return next();
+      if (newName.length < 2) {
+        return ctx.reply('⚠️ Nama terlalu pendek. Minimal 2 karakter!');
+      }
+
+      const { managePlatform, manageProjectId, manageProjectName } = ctx.session;
+      const loadingMsg = await ctx.reply('⏳ Mengganti nama project...');
+
+      try {
+        let result;
+        if (managePlatform === 'vercel') {
+          result = await renameVercelProject(manageProjectId, newName);
+        } else {
+          result = await renameNetlifySite(manageProjectId, newName);
+        }
+
+        ctx.session.manageState = null;
+        ctx.session.manageProjectName = result.name;
+        if (result.url) ctx.session.manageProjectUrl = result.url;
+
+        await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
+
+        const platformLabel = managePlatform === 'vercel' ? '🔺 Vercel' : '🟩 Netlify';
+        ctx.reply(
+          `✅ *Nama berhasil diubah!*\n\n` +
+            `Platform: *${platformLabel}*\n` +
+            `Nama lama: *${manageProjectName}*\n` +
+            `Nama baru: *${result.name}*`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch (err) {
+        await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id).catch(() => {});
+        ctx.session.manageState = null;
+        ctx.reply(`❌ Gagal mengganti nama: ${err.message}`);
+      }
+      return;
+    }
+
+    // ── Tambah custom domain ──
+    if (state === 'waiting_domain_add') {
+      const domain = ctx.message.text.trim().toLowerCase();
+      if (!domain || domain.startsWith('/')) return next();
+
+      // Validasi format domain sederhana
+      const domainRegex = /^([a-z0-9-]+\.)+[a-z]{2,}$/;
+      if (!domainRegex.test(domain)) {
+        return ctx.reply(
+          '⚠️ Format domain tidak valid!\n\nContoh yang benar:\n`blog.namadomain.com`\n`namadomain.com`',
+          { parse_mode: 'Markdown' }
+        );
+      }
+
+      const { managePlatform, manageProjectId, manageProjectName } = ctx.session;
+      const platformLabel = managePlatform === 'vercel' ? '🔺 Vercel' : '🟩 Netlify';
+      const loadingMsg = await ctx.reply('⏳ Menambahkan domain...');
+
+      try {
+        let result;
+        if (managePlatform === 'vercel') {
+          result = await addVercelDomain(manageProjectId, domain);
+        } else {
+          result = await addNetlifyDomain(manageProjectId, domain);
+        }
+
+        ctx.session.manageState = null;
+        await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
+
+        // Tentukan subdomain (bagian sebelum titik pertama)
+        const subdomain = domain.split('.')[0];
+        const rootDomain = domain.split('.').slice(1).join('.');
+
+        ctx.reply(
+          `✅ *Domain berhasil ditambahkan!*\n\n` +
+            `Platform: *${platformLabel}*\n` +
+            `Project: *${manageProjectName}*\n` +
+            `Domain: \`${domain}\`\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `📋 *Set DNS record ini di panel clouden.id kamu:*\n\n` +
+            `• Type  : \`CNAME\`\n` +
+            `• Name  : \`${subdomain}\`\n` +
+            `• Value : \`${result.cname}\`\n` +
+            `• TTL   : \`Auto\` atau \`3600\`\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `⏱️ Setelah DNS propagasi _(5\\-30 menit)_, website kamu bisa diakses di:\n` +
+            `🔗 https://${domain}`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch (err) {
+        await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id).catch(() => {});
+        ctx.session.manageState = null;
+        ctx.reply(`❌ Gagal menambahkan domain: ${err.message}`);
+      }
+      return;
+    }
+
+    return next();
   });
 
   // =====================

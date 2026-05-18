@@ -191,6 +191,71 @@ async function updateNetlifySite(siteId, fileMap) {
   return { url: res.data.ssl_url || `https://${res.data.name}.netlify.app` };
 }
 
+/**
+ * Tambahkan custom domain ke site Netlify
+ */
+async function addNetlifyDomain(siteId, domain) {
+  const token = process.env.NETLIFY_TOKEN;
+  if (!token) throw new Error('NETLIFY_TOKEN belum diset di file .env');
+
+  // Ambil info site dulu untuk dapat nama site
+  const siteRes = await axios.get(`${BASE_URL}/sites/${siteId}`, {
+    headers: getHeaders(token),
+  });
+  const siteName = siteRes.data.name;
+
+  // Tambahkan custom domain ke site
+  try {
+    await axios.post(
+      `${BASE_URL}/sites/${siteId}/domain_aliases`,
+      { domain },
+      { headers: getHeaders(token) }
+    );
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message;
+    throw new Error(`Gagal menambahkan domain ke Netlify: ${msg}`);
+  }
+
+  return {
+    domain,
+    cname: `${siteName}.netlify.app`,
+  };
+}
+
+/**
+ * Hapus custom domain dari site Netlify
+ */
+async function removeNetlifyDomain(siteId, domain) {
+  const token = process.env.NETLIFY_TOKEN;
+  if (!token) throw new Error('NETLIFY_TOKEN belum diset di file .env');
+
+  try {
+    await axios.delete(
+      `${BASE_URL}/sites/${siteId}/domain_aliases/${domain}`,
+      { headers: getHeaders(token) }
+    );
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message;
+    throw new Error(`Gagal menghapus domain dari Netlify: ${msg}`);
+  }
+}
+
+/**
+ * List custom domain dari site Netlify
+ */
+async function listNetlifyDomains(siteId) {
+  const token = process.env.NETLIFY_TOKEN;
+  if (!token) throw new Error('NETLIFY_TOKEN belum diset di file .env');
+
+  const res = await axios.get(`${BASE_URL}/sites/${siteId}`, {
+    headers: getHeaders(token),
+  });
+
+  return (res.data.domain_aliases || []).filter(
+    (d) => !d.endsWith('.netlify.app')
+  );
+}
+
 module.exports = {
   deployToNetlify,
   deployZipToNetlify,
@@ -198,4 +263,7 @@ module.exports = {
   deleteNetlifySite,
   renameNetlifySite,
   updateNetlifySite,
+  addNetlifyDomain,
+  removeNetlifyDomain,
+  listNetlifyDomains,
 };

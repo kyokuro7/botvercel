@@ -180,6 +180,65 @@ async function waitForVercelDeployment(deploymentId, token, maxAttempts = 30) {
   throw new Error('Deployment Vercel timeout. Cek dashboard Vercel kamu.');
 }
 
+/**
+ * Tambahkan custom domain ke project Vercel
+ */
+async function addVercelDomain(projectId, domain) {
+  const token = process.env.VERCEL_TOKEN;
+  if (!token) throw new Error('VERCEL_TOKEN belum diset di file .env');
+
+  try {
+    await axios.post(
+      `${BASE_URL}/v9/projects/${projectId}/domains`,
+      { name: domain },
+      { headers: getHeaders(token) }
+    );
+  } catch (err) {
+    const msg = err.response?.data?.error?.message || err.message;
+    throw new Error(`Gagal menambahkan domain ke Vercel: ${msg}`);
+  }
+
+  return {
+    domain,
+    cname: 'cname.vercel-dns.com',
+  };
+}
+
+/**
+ * Hapus custom domain dari project Vercel
+ */
+async function removeVercelDomain(projectId, domain) {
+  const token = process.env.VERCEL_TOKEN;
+  if (!token) throw new Error('VERCEL_TOKEN belum diset di file .env');
+
+  try {
+    await axios.delete(
+      `${BASE_URL}/v9/projects/${projectId}/domains/${domain}`,
+      { headers: getHeaders(token) }
+    );
+  } catch (err) {
+    const msg = err.response?.data?.error?.message || err.message;
+    throw new Error(`Gagal menghapus domain dari Vercel: ${msg}`);
+  }
+}
+
+/**
+ * List custom domain dari project Vercel
+ */
+async function listVercelDomains(projectId) {
+  const token = process.env.VERCEL_TOKEN;
+  if (!token) throw new Error('VERCEL_TOKEN belum diset di file .env');
+
+  const res = await axios.get(
+    `${BASE_URL}/v9/projects/${projectId}/domains`,
+    { headers: getHeaders(token) }
+  );
+
+  return res.data.domains
+    .filter((d) => !d.name.endsWith('.vercel.app'))
+    .map((d) => d.name);
+}
+
 module.exports = {
   deployToVercel,
   deployZipToVercel,
@@ -187,4 +246,7 @@ module.exports = {
   deleteVercelProject,
   renameVercelProject,
   updateVercelProject,
+  addVercelDomain,
+  removeVercelDomain,
+  listVercelDomains,
 };
