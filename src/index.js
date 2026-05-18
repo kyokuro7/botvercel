@@ -3,6 +3,7 @@ const { Telegraf, session } = require('telegraf');
 const deployCommand = require('./commands/deploy');
 const deleteCommand = require('./commands/delete');
 const manageCommand = require('./commands/manage');
+const cancelCommand = require('./commands/cancel');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const OWNER_ID = parseInt(process.env.OWNER_ID, 10);
@@ -43,6 +44,7 @@ bot.start((ctx) => {
     `/deploy \\- Deploy website baru\n` +
     `/manage \\- Kelola project \\(update, rename, lihat URL\\)\n` +
     `/delete \\- Hapus project\n` +
+    `/batal \\- Batalkan proses yang sedang berjalan\n` +
     `/help \\- Bantuan lengkap`,
     { parse_mode: 'MarkdownV2' }
   );
@@ -55,6 +57,7 @@ bot.help((ctx) => {
     `🚀 /deploy \\- Deploy website baru ke Vercel atau Netlify\n` +
     `⚙️ /manage \\- Kelola project \\(update file, ganti nama, lihat URL\\)\n` +
     `🗑️ /delete \\- Hapus project dari Vercel atau Netlify\n` +
+    `❌ /batal \\- Batalkan proses yang sedang berjalan\n` +
     `/help \\- Tampilkan bantuan ini\n\n` +
     `*Format file yang didukung:*\n` +
     `• 📄 *.html* \\- Halaman tunggal\n` +
@@ -64,7 +67,8 @@ bot.help((ctx) => {
     `2\\. Pilih platform\n` +
     `3\\. Masukkan nama project\n` +
     `4\\. Kirim file \\.html atau \\.zip\n` +
-    `5\\. Tunggu URL website mu jadi\\! 🚀`,
+    `5\\. Tunggu URL website mu jadi\\! 🚀\n\n` +
+    `💡 *Tips:* Ketik /batal kapan saja untuk membatalkan proses yang sedang berjalan\\.`,
     { parse_mode: 'MarkdownV2' }
   );
 });
@@ -73,6 +77,7 @@ bot.help((ctx) => {
 deployCommand(bot);
 deleteCommand(bot);
 manageCommand(bot);
+cancelCommand(bot);
 
 // Error handler
 bot.catch((err, ctx) => {
