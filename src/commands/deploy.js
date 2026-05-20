@@ -38,6 +38,12 @@ module.exports = function deployCommand(bot) {
       return ctx.reply(
         `🟩 *Deploy ke Netlify*\n\n` +
           `📊 Sisa limit: *${remaining}* deploy\n\n` +
+          `⚠️ *CATATAN PENTING:*\n` +
+          `Usahakan jangan iseng untuk mencoba deploy bot!\n` +
+          `Ketahuan deploy website phising? DELETE!\n\n` +
+          `Bot hanya untuk project ringan saja,\n` +
+          `jangan untuk project web bugging dan phising!\n` +
+          `Ketahuan, DELETE!\n\n` +
           `━━━━━━━━━━━━━━━━━━━━\n\n` +
           `Ketik *nama project* kamu:\n\n` +
           `📝 Contoh:\n` +
@@ -52,6 +58,13 @@ module.exports = function deployCommand(bot) {
     ctx.reply(
       `🚀 *Deploy Website*\n\n` +
       `📊 Sisa limit: *${remaining}* deploy\n\n` +
+      `⚠️ *CATATAN PENTING:*\n` +
+      `Usahakan jangan iseng untuk mencoba deploy bot!\n` +
+      `Ketahuan deploy website phising? DELETE!\n\n` +
+      `Bot hanya untuk project ringan saja,\n` +
+      `jangan untuk project web bugging dan phising!\n` +
+      `Ketahuan, DELETE!\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `Pilih platform yang ingin kamu gunakan:`,
       {
         parse_mode: 'Markdown',

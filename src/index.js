@@ -7,6 +7,7 @@ const deleteCommand = require('./commands/delete');
 const manageCommand = require('./commands/manage');
 const cancelCommand = require('./commands/cancel');
 const eventCommand = require('./commands/event');
+const broadcastCommand = require('./commands/broadcast');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const OWNER_ID = parseInt(process.env.OWNER_ID, 10);
@@ -112,10 +113,11 @@ bot.start(async (ctx) => {
           Markup.button.callback('🎯 Event', 'menu_event'),
         ],
         [
+          Markup.button.callback('📢 Broadcast', 'menu_broadcast'),
           Markup.button.callback('📊 Limit Saya', 'menu_limit'),
-          Markup.button.callback('📚 Bantuan', 'menu_help'),
         ],
         [
+          Markup.button.callback('📚 Bantuan', 'menu_help'),
           Markup.button.callback('ℹ️ Tentang Bot', 'menu_about'),
         ],
       ]),
@@ -215,6 +217,7 @@ deleteCommand(bot);
 manageCommand(bot);
 cancelCommand(bot);
 eventCommand(bot);
+broadcastCommand(bot);
 
 // Register verify handlers (untuk tombol verifikasi channel)
 registerVerifyHandlers(bot);
@@ -263,10 +266,11 @@ bot.action('menu_home', (ctx) => {
           Markup.button.callback('🎯 Event', 'menu_event'),
         ],
         [
+          Markup.button.callback('📢 Broadcast', 'menu_broadcast'),
           Markup.button.callback('📊 Limit Saya', 'menu_limit'),
-          Markup.button.callback('📚 Bantuan', 'menu_help'),
         ],
         [
+          Markup.button.callback('📚 Bantuan', 'menu_help'),
           Markup.button.callback('ℹ️ Tentang Bot', 'menu_about'),
         ],
       ]),
@@ -325,6 +329,13 @@ bot.action('menu_deploy', (ctx) => {
       `<blockquote>🟩 Deploy ke Netlify\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `📊 Sisa limit: ${remaining} deploy\n\n` +
+      `⚠️ CATATAN PENTING:\n` +
+      `Usahakan jangan iseng untuk mencoba deploy bot!\n` +
+      `Ketahuan deploy website phising? DELETE!\n\n` +
+      `Bot hanya untuk project ringan saja,\n` +
+      `jangan untuk project web bugging dan phising!\n` +
+      `Ketahuan, DELETE!\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `Ketik nama project kamu:\n\n` +
       `📝 Contoh:\n` +
       `• my-website\n` +
@@ -343,6 +354,13 @@ bot.action('menu_deploy', (ctx) => {
       `<blockquote>🚀 Deploy Website\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `📊 Sisa limit: ${remaining} deploy\n\n` +
+      `⚠️ CATATAN PENTING:\n` +
+      `Usahakan jangan iseng untuk mencoba deploy bot!\n` +
+      `Ketahuan deploy website phising? DELETE!\n\n` +
+      `Bot hanya untuk project ringan saja,\n` +
+      `jangan untuk project web bugging dan phising!\n` +
+      `Ketahuan, DELETE!\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `Pilih platform yang ingin kamu gunakan:</blockquote>`,
       {
         parse_mode: 'HTML',
