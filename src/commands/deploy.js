@@ -19,12 +19,9 @@ module.exports = function deployCommand(bot) {
           'Kamu tidak punya sisa limit deploy.\n\n' +
           '💡 *Cara dapat limit tambahan:*\n' +
           '• Join channel event = +2 limit per channel\n' +
-          '• Ketik /event untuk lihat channel tersedia',
+          '• Tunggu owner menambahkan event channel baru',
         {
           parse_mode: 'Markdown',
-          ...Markup.inlineKeyboard([
-            [Markup.button.callback('🎯 Lihat Event', 'menu_event')],
-          ]),
         }
       );
     }
@@ -33,6 +30,25 @@ module.exports = function deployCommand(bot) {
     ctx.session.platform = null;
     ctx.session.projectName = null;
 
+    // User biasa hanya bisa deploy ke Netlify
+    if (!isOwner(userId)) {
+      ctx.session.platform = 'netlify';
+      ctx.session.deployState = 'waiting_project_name';
+
+      return ctx.reply(
+        `🟩 *Deploy ke Netlify*\n\n` +
+          `📊 Sisa limit: *${remaining}* deploy\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `Ketik *nama project* kamu:\n\n` +
+          `📝 Contoh:\n` +
+          `• \`my-website\`\n` +
+          `• \`portofolio\`\n` +
+          `• \`landing-page\``,
+        { parse_mode: 'Markdown' }
+      );
+    }
+
+    // Owner bisa pilih platform
     ctx.reply(
       `🚀 *Deploy Website*\n\n` +
       `📊 Sisa limit: *${remaining}* deploy\n\n` +
@@ -66,7 +82,7 @@ module.exports = function deployCommand(bot) {
       '• `portofolio`\n' +
       '• `landing-page`',
       { parse_mode: 'Markdown' }
-    );
+    ).catch(() => {});
   });
 
   // =====================
@@ -85,7 +101,7 @@ module.exports = function deployCommand(bot) {
       '• `portofolio`\n' +
       '• `landing-page`',
       { parse_mode: 'Markdown' }
-    );
+    ).catch(() => {});
   });
 
   // =====================

@@ -1,8 +1,16 @@
 module.exports = function cancelCommand(bot) {
   // =====================
-  // /batal - Batalkan proses yang sedang berjalan
+  // /batal - Batalkan proses yang sedang berjalan (Owner Only)
   // =====================
   bot.command('batal', (ctx) => {
+    const userId = ctx.from.id;
+    const { isOwner } = require('../database/userDb');
+    
+    // Hanya owner yang bisa akses
+    if (!isOwner(userId)) {
+      return ctx.reply('🚫 Perintah ini hanya untuk owner.');
+    }
+
     // Cek apakah ada proses yang sedang berjalan
     const hasActiveProcess = 
       ctx.session.deployState ||

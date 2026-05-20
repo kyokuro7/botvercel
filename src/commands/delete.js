@@ -4,9 +4,17 @@ const { listNetlifySites, deleteNetlifySite } = require('../deploy/netlify');
 
 module.exports = function deleteCommand(bot) {
   // =====================
-  // /delete - Pilih platform
+  // /delete - Pilih platform (Owner Only)
   // =====================
   bot.command('delete', (ctx) => {
+    const userId = ctx.from.id;
+    const { isOwner } = require('../database/userDb');
+    
+    // Hanya owner yang bisa akses
+    if (!isOwner(userId)) {
+      return ctx.reply('🚫 Perintah ini hanya untuk owner.');
+    }
+
     ctx.session.deleteState = null;
     ctx.session.deletePlatform = null;
     ctx.session.deleteProjectId = null;

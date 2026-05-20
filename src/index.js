@@ -84,7 +84,6 @@ bot.start(async (ctx) => {
     `🚀 *Deploy Bot* \\- Platform Deploy Otomatis\n` +
     `━━━━━━━━━━━━━━━━━━━━\n\n` +
     `Deploy website kamu dengan mudah ke:\n\n` +
-    `🔺 *Vercel* \\- Fast \\& Reliable\n` +
     `🟩 *Netlify* \\- Simple \\& Powerful\n\n` +
     `━━━━━━━━━━━━━━━━━━━━\n` +
     `📊 *Sisa Limit Deploy:* ${remaining}\n` +
@@ -92,65 +91,114 @@ bot.start(async (ctx) => {
     `━━━━━━━━━━━━━━━━━━━━\n\n` +
     `Gunakan tombol di bawah atau ketik perintah:`;
 
-  ctx.reply(welcomeMessage, {
-    parse_mode: 'MarkdownV2',
-    ...Markup.inlineKeyboard([
-      [
-        Markup.button.callback('🚀 Deploy Website', 'menu_deploy'),
-        Markup.button.callback('⚙️ Kelola Project', 'menu_manage'),
-      ],
-      [
-        Markup.button.callback('🗑️ Hapus Project', 'menu_delete'),
-        Markup.button.callback('🎯 Event', 'menu_event'),
-      ],
-      [
-        Markup.button.callback('📊 Limit Saya', 'menu_limit'),
-        Markup.button.callback('📚 Bantuan', 'menu_help'),
-      ],
-      [
-        Markup.button.callback('ℹ️ Tentang Bot', 'menu_about'),
-      ],
-    ]),
-  });
+  // Menu untuk owner
+  if (isOwner(userId)) {
+    ctx.reply(welcomeMessage, {
+      parse_mode: 'MarkdownV2',
+      ...Markup.inlineKeyboard([
+        [
+          Markup.button.callback('🚀 Deploy Website', 'menu_deploy'),
+          Markup.button.callback('⚙️ Kelola Project', 'menu_manage'),
+        ],
+        [
+          Markup.button.callback('🗑️ Hapus Project', 'menu_delete'),
+          Markup.button.callback('🎯 Event', 'menu_event'),
+        ],
+        [
+          Markup.button.callback('📊 Limit Saya', 'menu_limit'),
+          Markup.button.callback('📚 Bantuan', 'menu_help'),
+        ],
+        [
+          Markup.button.callback('ℹ️ Tentang Bot', 'menu_about'),
+        ],
+      ]),
+    });
+  } else {
+    // Menu untuk user biasa (hanya deploy)
+    ctx.reply(welcomeMessage, {
+      parse_mode: 'MarkdownV2',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback('🚀 Deploy Website', 'menu_deploy')],
+        [
+          Markup.button.callback('📊 Limit Saya', 'menu_limit'),
+          Markup.button.callback('📚 Bantuan', 'menu_help'),
+        ],
+        [
+          Markup.button.callback('ℹ️ Tentang Bot', 'menu_about'),
+        ],
+      ]),
+    });
+  }
 });
 
 // Command /help
 bot.help((ctx) => {
-  const helpMessage =
-    `📚 *Panduan Lengkap Deploy Bot*\n` +
-    `━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `🎯 *Perintah Tersedia:*\n\n` +
-    `🚀 /deploy \\- Deploy website baru\n` +
-    `⚙️ /manage \\- Kelola project \\(update, rename, domain\\)\n` +
-    `🗑️ /delete \\- Hapus project\n` +
-    `❌ /batal \\- Batalkan proses berjalan\n` +
-    `📊 /limit \\- Cek sisa limit deploy\n` +
-    `🎯 /event \\- Lihat event channel untuk limit tambahan\n` +
-    `/help \\- Tampilkan panduan ini\n\n` +
-    `━━━━━━━━━━━━━━━━━━━━\n` +
-    `📁 *Format File:*\n\n` +
-    `• 📄 *\\.html* \\- Halaman tunggal\n` +
-    `• 📦 *\\.zip* \\- Multi\\-file \\(HTML, CSS, JS, gambar\\)\n\n` +
-    `━━━━━━━━━━━━━━━━━━━━\n` +
-    `📖 *Cara Deploy:*\n\n` +
-    `1️⃣ Ketik /deploy atau klik tombol\n` +
-    `2️⃣ Pilih platform \\(Vercel/Netlify\\)\n` +
-    `3️⃣ Masukkan nama project\n` +
-    `4️⃣ Kirim file \\.html atau \\.zip\n` +
-    `5️⃣ Dapatkan URL website\\! 🎉\n\n` +
-    `━━━━━━━━━━━━━━━━━━━━\n` +
-    `💡 *Cara Dapat Limit Deploy:*\n\n` +
-    `• Join channel utama \\= \\+2 limit\n` +
-    `• Join channel event \\= \\+2 limit per channel\n` +
-    `• Ketik /event untuk lihat channel tersedia`;
+  const userId = ctx.from.id;
+  const isOwnerUser = isOwner(userId);
+
+  const helpMessage = isOwnerUser
+    ? `📚 *Panduan Lengkap Deploy Bot*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `🎯 *Perintah Tersedia:*\n\n` +
+      `🚀 /deploy \\- Deploy website baru\n` +
+      `⚙️ /manage \\- Kelola project \\(update, rename, domain\\)\n` +
+      `🗑️ /delete \\- Hapus project\n` +
+      `❌ /batal \\- Batalkan proses berjalan\n` +
+      `📊 /limit \\- Cek sisa limit deploy\n` +
+      `🎯 /event \\- Lihat event channel untuk limit tambahan\n` +
+      `/help \\- Tampilkan panduan ini\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📁 *Format File:*\n\n` +
+      `• 📄 *\\.html* \\- Halaman tunggal\n` +
+      `• 📦 *\\.zip* \\- Multi\\-file \\(HTML, CSS, JS, gambar\\)\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📖 *Cara Deploy:*\n\n` +
+      `1️⃣ Ketik /deploy atau klik tombol\n` +
+      `2️⃣ Pilih platform \\(Vercel/Netlify\\)\n` +
+      `3️⃣ Masukkan nama project\n` +
+      `4️⃣ Kirim file \\.html atau \\.zip\n` +
+      `5️⃣ Dapatkan URL website\\! 🎉\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `💡 *Cara Dapat Limit Deploy:*\n\n` +
+      `• Join channel utama \\= \\+2 limit\n` +
+      `• Join channel event \\= \\+2 limit per channel\n` +
+      `• Ketik /event untuk lihat channel tersedia`
+    : `📚 *Panduan Lengkap Deploy Bot*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `🎯 *Perintah Tersedia:*\n\n` +
+      `🚀 /deploy \\- Deploy website baru\n` +
+      `📊 /limit \\- Cek sisa limit deploy\n` +
+      `/help \\- Tampilkan panduan ini\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📁 *Format File:*\n\n` +
+      `• 📄 *\\.html* \\- Halaman tunggal\n` +
+      `• 📦 *\\.zip* \\- Multi\\-file \\(HTML, CSS, JS, gambar\\)\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📖 *Cara Deploy:*\n\n` +
+      `1️⃣ Ketik /deploy atau klik tombol\n` +
+      `2️⃣ Masukkan nama project\n` +
+      `3️⃣ Kirim file \\.html atau \\.zip\n` +
+      `4️⃣ Dapatkan URL website\\! 🎉\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `💡 *Cara Dapat Limit Deploy:*\n\n` +
+      `• Join channel utama \\= \\+2 limit\n` +
+      `• Join channel event \\= \\+2 limit per channel\n` +
+      `• Tunggu owner menambahkan event channel baru`;
+
+  const buttons = isOwnerUser
+    ? [
+        [Markup.button.callback('🚀 Deploy Sekarang', 'menu_deploy')],
+        [Markup.button.callback('🎯 Event Channel', 'menu_event')],
+        [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
+      ]
+    : [
+        [Markup.button.callback('🚀 Deploy Sekarang', 'menu_deploy')],
+        [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
+      ];
 
   ctx.reply(helpMessage, {
     parse_mode: 'MarkdownV2',
-    ...Markup.inlineKeyboard([
-      [Markup.button.callback('🚀 Deploy Sekarang', 'menu_deploy')],
-      [Markup.button.callback('🎯 Event Channel', 'menu_event')],
-      [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
-    ]),
+    ...Markup.inlineKeyboard(buttons),
   });
 });
 
@@ -180,7 +228,6 @@ bot.action('menu_home', (ctx) => {
     `🚀 *Deploy Bot* \\- Platform Deploy Otomatis\n` +
     `━━━━━━━━━━━━━━━━━━━━\n\n` +
     `Deploy website kamu dengan mudah ke:\n\n` +
-    `🔺 *Vercel* \\- Fast \\& Reliable\n` +
     `🟩 *Netlify* \\- Simple \\& Powerful\n\n` +
     `━━━━━━━━━━━━━━━━━━━━\n` +
     `📊 *Sisa Limit Deploy:* ${remaining}\n` +
@@ -188,26 +235,44 @@ bot.action('menu_home', (ctx) => {
     `━━━━━━━━━━━━━━━━━━━━\n\n` +
     `Gunakan tombol di bawah atau ketik perintah:`;
 
-  ctx.editMessageText(welcomeMessage, {
-    parse_mode: 'MarkdownV2',
-    ...Markup.inlineKeyboard([
-      [
-        Markup.button.callback('🚀 Deploy Website', 'menu_deploy'),
-        Markup.button.callback('⚙️ Kelola Project', 'menu_manage'),
-      ],
-      [
-        Markup.button.callback('🗑️ Hapus Project', 'menu_delete'),
-        Markup.button.callback('🎯 Event', 'menu_event'),
-      ],
-      [
-        Markup.button.callback('📊 Limit Saya', 'menu_limit'),
-        Markup.button.callback('📚 Bantuan', 'menu_help'),
-      ],
-      [
-        Markup.button.callback('ℹ️ Tentang Bot', 'menu_about'),
-      ],
-    ]),
-  }).catch(() => {});
+  // Menu untuk owner
+  if (isOwner(userId)) {
+    ctx.editMessageText(welcomeMessage, {
+      parse_mode: 'MarkdownV2',
+      ...Markup.inlineKeyboard([
+        [
+          Markup.button.callback('🚀 Deploy Website', 'menu_deploy'),
+          Markup.button.callback('⚙️ Kelola Project', 'menu_manage'),
+        ],
+        [
+          Markup.button.callback('🗑️ Hapus Project', 'menu_delete'),
+          Markup.button.callback('🎯 Event', 'menu_event'),
+        ],
+        [
+          Markup.button.callback('📊 Limit Saya', 'menu_limit'),
+          Markup.button.callback('📚 Bantuan', 'menu_help'),
+        ],
+        [
+          Markup.button.callback('ℹ️ Tentang Bot', 'menu_about'),
+        ],
+      ]),
+    }).catch(() => {});
+  } else {
+    // Menu untuk user biasa
+    ctx.editMessageText(welcomeMessage, {
+      parse_mode: 'MarkdownV2',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback('🚀 Deploy Website', 'menu_deploy')],
+        [
+          Markup.button.callback('📊 Limit Saya', 'menu_limit'),
+          Markup.button.callback('📚 Bantuan', 'menu_help'),
+        ],
+        [
+          Markup.button.callback('ℹ️ Tentang Bot', 'menu_about'),
+        ],
+      ]),
+    }).catch(() => {});
+  }
 });
 
 bot.action('menu_deploy', (ctx) => {
@@ -222,12 +287,11 @@ bot.action('menu_deploy', (ctx) => {
         `Kamu tidak punya sisa limit deploy\\.\n\n` +
         `💡 *Cara dapat limit tambahan:*\n` +
         `• Join channel event \\= \\+2 limit per channel\n` +
-        `• Ketik /event untuk lihat channel tersedia\n\n` +
+        `• Tunggu owner menambahkan event channel baru\n\n` +
         `━━━━━━━━━━━━━━━━━━━━`,
       {
         parse_mode: 'MarkdownV2',
         ...Markup.inlineKeyboard([
-          [Markup.button.callback('🎯 Lihat Event', 'menu_event')],
           [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
         ]),
       }
@@ -238,24 +302,56 @@ bot.action('menu_deploy', (ctx) => {
   ctx.session.platform = null;
   ctx.session.projectName = null;
 
-  ctx.editMessageText(
-    `🚀 *Deploy Website*\n\n` +
-      `📊 Sisa limit: *${remaining}* deploy\n\n` +
-      `Pilih platform yang ingin kamu gunakan:`,
-    {
-      parse_mode: 'Markdown',
-      ...Markup.inlineKeyboard([
-        [
-          Markup.button.callback('🔺 Vercel', 'platform_vercel'),
-          Markup.button.callback('🟩 Netlify', 'platform_netlify'),
-        ],
-        [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
-      ]),
-    }
-  ).catch(() => {});
+  // User biasa hanya bisa deploy ke Netlify
+  if (!isOwner(userId)) {
+    // Langsung set platform ke Netlify dan minta nama project
+    ctx.session.platform = 'netlify';
+    ctx.session.deployState = 'waiting_project_name';
+
+    ctx.editMessageText(
+      `🟩 *Deploy ke Netlify*\n\n` +
+        `📊 Sisa limit: *${remaining}* deploy\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `Ketik *nama project* kamu:\n\n` +
+        `📝 Contoh:\n` +
+        `• \`my-website\`\n` +
+        `• \`portofolio\`\n` +
+        `• \`landing-page\``,
+      {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback('🔙 Batal', 'menu_home')],
+        ]),
+      }
+    ).catch(() => {});
+  } else {
+    // Owner bisa pilih platform
+    ctx.editMessageText(
+      `🚀 *Deploy Website*\n\n` +
+        `📊 Sisa limit: *${remaining}* deploy\n\n` +
+        `Pilih platform yang ingin kamu gunakan:`,
+      {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+          [
+            Markup.button.callback('🔺 Vercel', 'platform_vercel'),
+            Markup.button.callback('🟩 Netlify', 'platform_netlify'),
+          ],
+          [Markup.button.callback('🔙 Batal', 'menu_home')],
+        ]),
+      }
+    ).catch(() => {});
+  }
 });
 
 bot.action('menu_manage', (ctx) => {
+  const userId = ctx.from.id;
+  
+  // Hanya owner yang bisa akses
+  if (!isOwner(userId)) {
+    return ctx.answerCbQuery('🚫 Fitur ini hanya untuk owner.', { show_alert: true });
+  }
+
   ctx.session.manageState = null;
   ctx.session.managePlatform = null;
   ctx.session.manageProjectId = null;
@@ -278,6 +374,13 @@ bot.action('menu_manage', (ctx) => {
 });
 
 bot.action('menu_delete', (ctx) => {
+  const userId = ctx.from.id;
+  
+  // Hanya owner yang bisa akses
+  if (!isOwner(userId)) {
+    return ctx.answerCbQuery('🚫 Fitur ini hanya untuk owner.', { show_alert: true });
+  }
+
   ctx.session.deleteState = null;
   ctx.session.deletePlatform = null;
   ctx.session.deleteProjectId = null;
@@ -300,6 +403,12 @@ bot.action('menu_delete', (ctx) => {
 
 bot.action('menu_event', (ctx) => {
   const userId = ctx.from.id;
+  
+  // Hanya owner yang bisa akses menu event lewat button
+  if (!isOwner(userId)) {
+    return ctx.answerCbQuery('🚫 Fitur ini hanya untuk owner.', { show_alert: true });
+  }
+
   const unjoinedChannels = getUnjoinedEventChannels(userId);
 
   if (unjoinedChannels.length === 0) {
@@ -350,6 +459,12 @@ bot.action('menu_limit', (ctx) => {
     ? `\n\n💡 Ada *${unjoinedChannels.length}* channel event yang bisa kamu join\\!`
     : '';
 
+  const buttons = [];
+  if (isOwner(userId) && unjoinedChannels.length > 0) {
+    buttons.push([Markup.button.callback('🎯 Lihat Event', 'menu_event')]);
+  }
+  buttons.push([Markup.button.callback('🏠 Menu Utama', 'menu_home')]);
+
   ctx.editMessageText(
     `📊 *Deploy Limit*\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -362,39 +477,57 @@ bot.action('menu_limit', (ctx) => {
       `━━━━━━━━━━━━━━━━━━━━`,
     {
       parse_mode: 'MarkdownV2',
-      ...Markup.inlineKeyboard([
-        ...(unjoinedChannels.length > 0 ? [[Markup.button.callback('🎯 Lihat Event', 'menu_event')]] : []),
-        [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
-      ]),
+      ...Markup.inlineKeyboard(buttons),
     }
   ).catch(() => {});
 });
 
 bot.action('menu_help', (ctx) => {
-  const helpMessage =
-    `📚 *Panduan Lengkap Deploy Bot*\n` +
-    `━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `🎯 *Perintah Tersedia:*\n\n` +
-    `🚀 /deploy \\- Deploy website baru\n` +
-    `⚙️ /manage \\- Kelola project\n` +
-    `🗑️ /delete \\- Hapus project\n` +
-    `❌ /batal \\- Batalkan proses\n` +
-    `📊 /limit \\- Cek sisa limit\n` +
-    `🎯 /event \\- Event channel\n` +
-    `/help \\- Panduan ini\n\n` +
-    `━━━━━━━━━━━━━━━━━━━━\n` +
-    `💡 *Cara Dapat Limit Deploy:*\n\n` +
-    `• Join channel utama \\= \\+2 limit\n` +
-    `• Join channel event \\= \\+2 limit per channel\n` +
-    `• Ketik /event untuk lihat channel tersedia`;
+  const userId = ctx.from.id;
+  const isOwnerUser = isOwner(userId);
+
+  const helpMessage = isOwnerUser
+    ? `📚 *Panduan Lengkap Deploy Bot*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `🎯 *Perintah Tersedia:*\n\n` +
+      `🚀 /deploy \\- Deploy website baru\n` +
+      `⚙️ /manage \\- Kelola project\n` +
+      `🗑️ /delete \\- Hapus project\n` +
+      `❌ /batal \\- Batalkan proses\n` +
+      `📊 /limit \\- Cek sisa limit\n` +
+      `🎯 /event \\- Event channel\n` +
+      `/help \\- Panduan ini\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `💡 *Cara Dapat Limit Deploy:*\n\n` +
+      `• Join channel utama \\= \\+2 limit\n` +
+      `• Join channel event \\= \\+2 limit per channel\n` +
+      `• Ketik /event untuk lihat channel tersedia`
+    : `📚 *Panduan Lengkap Deploy Bot*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `🎯 *Perintah Tersedia:*\n\n` +
+      `🚀 /deploy \\- Deploy website baru\n` +
+      `📊 /limit \\- Cek sisa limit\n` +
+      `/help \\- Panduan ini\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `💡 *Cara Dapat Limit Deploy:*\n\n` +
+      `• Join channel utama \\= \\+2 limit\n` +
+      `• Join channel event \\= \\+2 limit per channel\n` +
+      `• Tunggu owner menambahkan event channel baru`;
+
+  const buttons = isOwnerUser
+    ? [
+        [Markup.button.callback('🚀 Deploy Sekarang', 'menu_deploy')],
+        [Markup.button.callback('🎯 Event Channel', 'menu_event')],
+        [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
+      ]
+    : [
+        [Markup.button.callback('🚀 Deploy Sekarang', 'menu_deploy')],
+        [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
+      ];
 
   ctx.editMessageText(helpMessage, {
     parse_mode: 'MarkdownV2',
-    ...Markup.inlineKeyboard([
-      [Markup.button.callback('🚀 Deploy Sekarang', 'menu_deploy')],
-      [Markup.button.callback('🎯 Event Channel', 'menu_event')],
-      [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
-    ]),
+    ...Markup.inlineKeyboard(buttons),
   }).catch(() => {});
 });
 

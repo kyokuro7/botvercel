@@ -1,5 +1,6 @@
 const { Markup } = require('telegraf');
 const axios = require('axios');
+const { isOwner } = require('../database/userDb');
 const {
   listVercelProjects,
   renameVercelProject,
@@ -19,9 +20,16 @@ const {
 
 module.exports = function manageCommand(bot) {
   // =====================
-  // /manage - Pilih platform
+  // /manage - Pilih platform (Owner Only)
   // =====================
   bot.command('manage', (ctx) => {
+    const userId = ctx.from.id;
+    
+    // Hanya owner yang bisa akses
+    if (!isOwner(userId)) {
+      return ctx.reply('🚫 Perintah ini hanya untuk owner.');
+    }
+
     ctx.session.manageState = null;
     ctx.session.managePlatform = null;
     ctx.session.manageProjectId = null;
