@@ -23,38 +23,26 @@ Bot Telegram yang powerful untuk deploy website ke platform hosting populer sepe
 ## 🚀 Instalasi
 
 1. Clone repository ini:
-```bash
-git clone https://github.com/kyokuro7/excell-botz.git
-cd excell-botz
-```
+> git clone https://github.com/kyokuro7/excell-botz.git
+> cd excell-botz
 
 2. Install dependencies:
-```bash
-npm install
-```
+> npm install
 
 3. Copy file `.env.example` menjadi `.env`:
-```bash
-cp .env.example .env
-```
+> cp .env.example .env
 
 4. Isi file `.env` dengan token kamu:
-```env
-BOT_TOKEN=your_telegram_bot_token
-OWNER_ID=your_telegram_user_id
-VERCEL_TOKEN=your_vercel_token
-NETLIFY_TOKEN=your_netlify_token
-```
+> BOT_TOKEN=your_telegram_bot_token
+> OWNER_ID=your_telegram_user_id
+> VERCEL_TOKEN=your_vercel_token
+> NETLIFY_TOKEN=your_netlify_token
 
 5. Jalankan bot:
-```bash
-npm start
-```
+> npm start
 
 Untuk development dengan auto-reload:
-```bash
-npm run dev
-```
+> npm run dev
 
 ## 🎯 Cara Mendapatkan Token
 
@@ -116,23 +104,21 @@ Bot ini memiliki tampilan menu yang modern dan profesional dengan:
 
 ## 🔧 Struktur Project
 
-```
-excell-botz/
-├── src/
-│   ├── commands/
-│   │   ├── cancel.js      # Handler untuk /batal
-│   │   ├── delete.js      # Handler untuk /delete
-│   │   ├── deploy.js      # Handler untuk /deploy
-│   │   └── manage.js      # Handler untuk /manage
-│   ├── deploy/
-│   │   ├── netlify.js     # Netlify API functions
-│   │   └── vercel.js      # Vercel API functions
-│   └── index.js           # Bot main file
-├── index.js               # Entry point
-├── package.json
-├── .env.example
-└── README.md
-```
+> excell-botz/
+> ├── src/
+> │   ├── commands/
+> │   │   ├── cancel.js      # Handler untuk /batal
+> │   │   ├── delete.js      # Handler untuk /delete
+> │   │   ├── deploy.js      # Handler untuk /deploy
+> │   │   └── manage.js      # Handler untuk /manage
+> │   ├── deploy/
+> │   │   ├── netlify.js     # Netlify API functions
+> │   │   └── vercel.js      # Vercel API functions
+> │   └── index.js           # Bot main file
+> ├── index.js               # Entry point
+> ├── package.json
+> ├── .env.example
+> └── README.md
 
 ## 🐛 Troubleshooting
 
