@@ -3,6 +3,8 @@ const axios = require('axios');
 const { deployToVercel, deployZipToVercel } = require('../deploy/vercel');
 const { deployToNetlify, deployZipToNetlify } = require('../deploy/netlify');
 const { getDeployRemaining, useDeployLimit, isOwner } = require('../database/userDb');
+const { scanContent, scanFileMap, formatScanReport } = require('../security/scanner');
+const { getSecuritySettings } = require('../database/settingsDb');
 
 module.exports = function deployCommand(bot) {
   // =====================
@@ -186,6 +188,52 @@ module.exports = function deployCommand(bot) {
       if (isHtml) {
         // Deploy file HTML tunggal
         const htmlContent = fileBuffer.toString('utf-8');
+
+        // === SECURITY SCAN ===
+        const secSettings = getSecuritySettings();
+        if (secSettings.enabled && secSettings.scan_on_deploy) {
+          const scanResult = scanContent(htmlContent);
+          
+          if (!scanResult.safe) {
+            await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
+            
+            const report = formatScanReport(scanResult);
+            await ctx.reply(
+              `🛡️ *DEPLOY DIBLOKIR*\n\n${report}\n\n` +
+              `File kamu mengandung konten berbahaya dan tidak bisa di-deploy.`,
+              { parse_mode: 'Markdown' }
+            );
+
+            // Notifikasi owner jika bukan owner yang deploy
+            if (secSettings.notify_owner && !isOwner(userId)) {
+              const OWNER_ID = parseInt(process.env.OWNER_ID, 10);
+              const userName = ctx.from.first_name || 'Unknown';
+              const username = ctx.from.username ? `@${ctx.from.username}` : 'N/A';
+              ctx.telegram.sendMessage(
+                OWNER_ID,
+                `🚨 *ALERT KEAMANAN*\n\n` +
+                `User: *${userName}* (${username})\n` +
+                `ID: \`${userId}\`\n` +
+                `Project: *${projectName}*\n` +
+                `File: ${fileName}\n\n` +
+                `${report}`,
+                { parse_mode: 'Markdown' }
+              ).catch(() => {});
+            }
+
+            ctx.session.deployState = null;
+            ctx.session.platform = null;
+            ctx.session.projectName = null;
+            return;
+          } else if (scanResult.threats.length > 0 && scanResult.level !== 'SAFE') {
+            // Ada warning tapi tidak diblokir
+            await ctx.reply(
+              `⚠️ *Peringatan Keamanan*\n\nDitemukan ${scanResult.threats.length} potensi ancaman ringan, tapi deploy tetap dilanjutkan.\n\nSkor: ${scanResult.score}/5`,
+              { parse_mode: 'Markdown' }
+            );
+          }
+        }
+
         if (platform === 'vercel') {
           result = await deployToVercel(projectName, htmlContent);
         } else {
@@ -205,6 +253,50 @@ module.exports = function deployCommand(bot) {
             '⚠️ ZIP kamu harus mengandung file *index.html* ya!',
             { parse_mode: 'Markdown' }
           );
+        }
+
+        // === SECURITY SCAN ZIP ===
+        const secSettings = getSecuritySettings();
+        if (secSettings.enabled && secSettings.scan_on_deploy) {
+          const scanResult = scanFileMap(fileMap);
+          
+          if (!scanResult.safe) {
+            await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
+            
+            const report = formatScanReport(scanResult);
+            await ctx.reply(
+              `🛡️ *DEPLOY DIBLOKIR*\n\n${report}\n\n` +
+              `File ZIP kamu mengandung konten berbahaya dan tidak bisa di-deploy.`,
+              { parse_mode: 'Markdown' }
+            );
+
+            // Notifikasi owner
+            if (secSettings.notify_owner && !isOwner(userId)) {
+              const OWNER_ID = parseInt(process.env.OWNER_ID, 10);
+              const userName = ctx.from.first_name || 'Unknown';
+              const username = ctx.from.username ? `@${ctx.from.username}` : 'N/A';
+              ctx.telegram.sendMessage(
+                OWNER_ID,
+                `🚨 *ALERT KEAMANAN*\n\n` +
+                `User: *${userName}* (${username})\n` +
+                `ID: \`${userId}\`\n` +
+                `Project: *${projectName}*\n` +
+                `File: ${fileName}\n\n` +
+                `${report}`,
+                { parse_mode: 'Markdown' }
+              ).catch(() => {});
+            }
+
+            ctx.session.deployState = null;
+            ctx.session.platform = null;
+            ctx.session.projectName = null;
+            return;
+          } else if (scanResult.threats.length > 0 && scanResult.level !== 'SAFE') {
+            await ctx.reply(
+              `⚠️ *Peringatan Keamanan*\n\nDitemukan ${scanResult.threats.length} potensi ancaman ringan, tapi deploy tetap dilanjutkan.\n\nSkor: ${scanResult.score}/5`,
+              { parse_mode: 'Markdown' }
+            );
+          }
         }
 
         if (platform === 'vercel') {

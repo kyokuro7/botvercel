@@ -8,6 +8,7 @@ const manageCommand = require('./commands/manage');
 const cancelCommand = require('./commands/cancel');
 const eventCommand = require('./commands/event');
 const broadcastCommand = require('./commands/broadcast');
+const securityCommand = require('./commands/security');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const OWNER_ID = parseInt(process.env.OWNER_ID, 10);
@@ -117,7 +118,10 @@ bot.start(async (ctx) => {
           Markup.button.callback('📊 Limit Saya', 'menu_limit'),
         ],
         [
+          Markup.button.callback('🛡️ Keamanan', 'menu_security'),
           Markup.button.callback('📚 Bantuan', 'menu_help'),
+        ],
+        [
           Markup.button.callback('ℹ️ Tentang Bot', 'menu_about'),
         ],
       ]),
@@ -218,6 +222,7 @@ manageCommand(bot);
 cancelCommand(bot);
 eventCommand(bot);
 broadcastCommand(bot);
+securityCommand(bot);
 
 // Register verify handlers (untuk tombol verifikasi channel)
 registerVerifyHandlers(bot);
@@ -270,7 +275,10 @@ bot.action('menu_home', (ctx) => {
           Markup.button.callback('📊 Limit Saya', 'menu_limit'),
         ],
         [
+          Markup.button.callback('🛡️ Keamanan', 'menu_security'),
           Markup.button.callback('📚 Bantuan', 'menu_help'),
+        ],
+        [
           Markup.button.callback('ℹ️ Tentang Bot', 'menu_about'),
         ],
       ]),
