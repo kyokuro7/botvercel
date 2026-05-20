@@ -1,6 +1,8 @@
 const { Markup } = require('telegraf');
 const axios = require('axios');
 const { isOwner } = require('../database/userDb');
+const { scanContent, scanFileMap, formatScanReport } = require('../security/scanner');
+const { getSecuritySettings } = require('../database/settingsDb');
 const {
   listVercelProjects,
   renameVercelProject,
@@ -67,15 +69,26 @@ module.exports = function manageCommand(bot) {
       // Simpan list project di session, button cukup pakai index
       ctx.session.manageProjectList = projects;
 
+      // Format daftar project dengan link
+      let projectList = '🔺 *Daftar Project Vercel:*\n';
+      projectList += '━━━━━━━━━━━━━━━━━━━━\n\n';
+      projects.forEach((p, i) => {
+        projectList += `${i + 1}. *${p.name}*\n`;
+        projectList += `   🔗 ${p.url || 'URL belum tersedia'}\n\n`;
+      });
+      projectList += '━━━━━━━━━━━━━━━━━━━━\n\n';
+      projectList += 'Pilih project yang ingin dikelola:';
+
       const buttons = projects.map((p, i) => [
         Markup.button.callback(`🔺 ${p.name}`, `mgr_pick_${i}`),
       ]);
       buttons.push([Markup.button.callback('❌ Batal', 'mgr_cancel')]);
 
-      ctx.editMessageText(
-        '🔺 *Pilih project Vercel yang ingin dikelola:*',
-        { parse_mode: 'Markdown', ...Markup.inlineKeyboard(buttons) }
-      );
+      ctx.editMessageText(projectList, {
+        parse_mode: 'Markdown',
+        disable_web_page_preview: true,
+        ...Markup.inlineKeyboard(buttons),
+      });
     } catch (err) {
       ctx.editMessageText(`❌ Gagal mengambil daftar project: ${err.message}`);
     }
@@ -97,15 +110,26 @@ module.exports = function manageCommand(bot) {
       // Simpan list site di session, button cukup pakai index
       ctx.session.manageProjectList = sites;
 
+      // Format daftar site dengan link
+      let siteList = '🟩 *Daftar Site Netlify:*\n';
+      siteList += '━━━━━━━━━━━━━━━━━━━━\n\n';
+      sites.forEach((s, i) => {
+        siteList += `${i + 1}. *${s.name}*\n`;
+        siteList += `   🔗 ${s.url || 'URL belum tersedia'}\n\n`;
+      });
+      siteList += '━━━━━━━━━━━━━━━━━━━━\n\n';
+      siteList += 'Pilih site yang ingin dikelola:';
+
       const buttons = sites.map((s, i) => [
         Markup.button.callback(`🟩 ${s.name}`, `mgr_pick_${i}`),
       ]);
       buttons.push([Markup.button.callback('❌ Batal', 'mgr_cancel')]);
 
-      ctx.editMessageText(
-        '🟩 *Pilih site Netlify yang ingin dikelola:*',
-        { parse_mode: 'Markdown', ...Markup.inlineKeyboard(buttons) }
-      );
+      ctx.editMessageText(siteList, {
+        parse_mode: 'Markdown',
+        disable_web_page_preview: true,
+        ...Markup.inlineKeyboard(buttons),
+      });
     } catch (err) {
       ctx.editMessageText(`❌ Gagal mengambil daftar site: ${err.message}`);
     }
@@ -523,6 +547,24 @@ module.exports = function manageCommand(bot) {
 
       if (isHtml) {
         const htmlContent = fileBuffer.toString('utf-8');
+
+        // === SECURITY SCAN SAAT UPDATE ===
+        const secSettings = getSecuritySettings();
+        if (secSettings.enabled && secSettings.scan_on_update) {
+          const scanResult = scanContent(htmlContent);
+          
+          if (!scanResult.safe) {
+            await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
+            ctx.session.manageState = null;
+            
+            const report = formatScanReport(scanResult);
+            return ctx.reply(
+              `🛡️ *UPDATE DIBLOKIR*\n\n${report}\n\nFile mengandung konten berbahaya!`,
+              { parse_mode: 'Markdown' }
+            );
+          }
+        }
+
         const fileMap = { 'index.html': fileBuffer };
 
         if (managePlatform === 'vercel') {
@@ -535,6 +577,23 @@ module.exports = function manageCommand(bot) {
       } else {
         // ZIP: ekstrak lalu upload
         const fileMap = await extractZipToFileMap(fileBuffer);
+
+        // === SECURITY SCAN ZIP SAAT UPDATE ===
+        const secSettings = getSecuritySettings();
+        if (secSettings.enabled && secSettings.scan_on_update) {
+          const scanResult = scanFileMap(fileMap);
+          
+          if (!scanResult.safe) {
+            await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
+            ctx.session.manageState = null;
+            
+            const report = formatScanReport(scanResult);
+            return ctx.reply(
+              `🛡️ *UPDATE DIBLOKIR*\n\n${report}\n\nFile ZIP mengandung konten berbahaya!`,
+              { parse_mode: 'Markdown' }
+            );
+          }
+        }
 
         if (managePlatform === 'vercel') {
           const vercelFiles = Object.entries(fileMap).map(([path, buf]) => ({
