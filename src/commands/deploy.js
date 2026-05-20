@@ -2,19 +2,41 @@ const { Markup } = require('telegraf');
 const axios = require('axios');
 const { deployToVercel, deployZipToVercel } = require('../deploy/vercel');
 const { deployToNetlify, deployZipToNetlify } = require('../deploy/netlify');
+const { getDeployRemaining, useDeployLimit, isOwner } = require('../database/userDb');
 
 module.exports = function deployCommand(bot) {
   // =====================
-  // /deploy - Tampilkan pilihan platform
+  // /deploy - Tampilkan pilihan platform (cek limit dulu)
   // =====================
   bot.command('deploy', (ctx) => {
+    const userId = ctx.from.id;
+    const remaining = getDeployRemaining(userId);
+
+    // Owner bypass limit
+    if (!isOwner(userId) && remaining <= 0) {
+      return ctx.reply(
+        '❌ *Limit Deploy Habis!*\n\n' +
+          'Kamu tidak punya sisa limit deploy.\n\n' +
+          '💡 *Cara dapat limit tambahan:*\n' +
+          '• Join channel event = +2 limit per channel\n' +
+          '• Ketik /event untuk lihat channel tersedia',
+        {
+          parse_mode: 'Markdown',
+          ...Markup.inlineKeyboard([
+            [Markup.button.callback('🎯 Lihat Event', 'menu_event')],
+          ]),
+        }
+      );
+    }
+
     ctx.session.deployState = null;
     ctx.session.platform = null;
     ctx.session.projectName = null;
 
     ctx.reply(
-      '🚀 *Deploy Website*\n\n' +
-      'Pilih platform yang ingin kamu gunakan:',
+      `🚀 *Deploy Website*\n\n` +
+      `📊 Sisa limit: *${remaining}* deploy\n\n` +
+      `Pilih platform yang ingin kamu gunakan:`,
       {
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
@@ -163,6 +185,15 @@ module.exports = function deployCommand(bot) {
         }
       }
 
+      // Kurangi limit deploy (owner bypass)
+      const userId = ctx.from.id;
+      if (!isOwner(userId)) {
+        const limitResult = useDeployLimit(userId);
+        var remainingAfter = limitResult.remaining;
+      } else {
+        var remainingAfter = '∞';
+      }
+
       ctx.session.deployState = null;
       ctx.session.platform = null;
       ctx.session.projectName = null;
@@ -170,14 +201,15 @@ module.exports = function deployCommand(bot) {
       await ctx.telegram.deleteMessage(ctx.chat.id, loadingMsg.message_id);
 
       ctx.reply(
-        `✅ *Deploy Berhasil\\!*\n\n` +
+        `✅ *Deploy Berhasil!*\n\n` +
           `━━━━━━━━━━━━━━━━━━━━\n\n` +
           `📦 *Project:* ${projectName}\n` +
           `🌐 *Platform:* ${platformLabel}\n` +
           `📁 *Tipe:* ${fileType}\n\n` +
           `━━━━━━━━━━━━━━━━━━━━\n\n` +
           `🔗 *URL Website:*\n${result.url}\n\n` +
-          `🎉 _Website kamu sudah live\\!_`,
+          `📊 *Sisa limit:* ${remainingAfter} deploy\n\n` +
+          `🎉 _Website kamu sudah live!_`,
         { parse_mode: 'Markdown' }
       );
     } catch (err) {

@@ -4,6 +4,9 @@
 # Dependencies
 node_modules/
 
+# Database (user data)
+data/
+
 # Logs
 *.log
 npm-debug.log*
