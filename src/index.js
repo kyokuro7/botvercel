@@ -79,8 +79,7 @@ bot.start(async (ctx) => {
   const userName = ctx.from.first_name || 'User';
 
   const welcomeMessage = 
-    '```javascript\n' +
-    `Halo ${userName} 👋\n` +
+    `<blockquote>Halo ${userName} 👋\n` +
     `Deploy Bot - Platform Deploy Otomatis\n` +
     `━━━━━━━━━━━━━━━━━━━━\n\n` +
     `Name   : ${userName}\n` +
@@ -97,12 +96,12 @@ bot.start(async (ctx) => {
     `"Pedagang yang jujur dan amanah akan\n` +
     `bersama para nabi, orang-orang\n` +
     `yang benar, dan para syuhada."\n` +
-    `(HR. Tirmidzi)\n` +
-    '```';
+    `(HR. Tirmidzi)</blockquote>`;
 
   // Menu untuk owner
   if (isOwner(userId)) {
     ctx.reply(welcomeMessage, {
+      parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         [
           Markup.button.callback('🚀 Deploy Website', 'menu_deploy'),
@@ -124,6 +123,7 @@ bot.start(async (ctx) => {
   } else {
     // Menu untuk user biasa (hanya deploy)
     ctx.reply(welcomeMessage, {
+      parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         [Markup.button.callback('🚀 Deploy Website', 'menu_deploy')],
         [
@@ -144,8 +144,7 @@ bot.help((ctx) => {
   const isOwnerUser = isOwner(userId);
 
   const helpMessage = isOwnerUser
-    ? '```javascript\n' +
-      '📚 Panduan Lengkap Deploy Bot\n' +
+    ? '<blockquote>📚 Panduan Lengkap Deploy Bot\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
       '🎯 Perintah Tersedia:\n\n' +
       '🚀 /deploy  - Deploy website baru\n' +
@@ -170,10 +169,8 @@ bot.help((ctx) => {
       '💡 Cara Dapat Limit Deploy:\n\n' +
       '• Join channel utama = +2 limit\n' +
       '• Join channel event = +2 limit per channel\n' +
-      '• Ketik /event untuk lihat channel tersedia\n' +
-      '```'
-    : '```javascript\n' +
-      '📚 Panduan Lengkap Deploy Bot\n' +
+      '• Ketik /event untuk lihat channel tersedia</blockquote>'
+    : '<blockquote>📚 Panduan Lengkap Deploy Bot\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
       '🎯 Perintah Tersedia:\n\n' +
       '🚀 /deploy - Deploy website baru\n' +
@@ -193,8 +190,7 @@ bot.help((ctx) => {
       '💡 Cara Dapat Limit Deploy:\n\n' +
       '• Join channel utama = +2 limit\n' +
       '• Join channel event = +2 limit per channel\n' +
-      '• Tunggu owner menambahkan event channel baru\n' +
-      '```';
+      '• Tunggu owner menambahkan event channel baru</blockquote>';
 
   const buttons = isOwnerUser
     ? [
@@ -208,6 +204,7 @@ bot.help((ctx) => {
       ];
 
   ctx.reply(helpMessage, {
+    parse_mode: 'HTML',
     ...Markup.inlineKeyboard(buttons),
   });
 });
@@ -233,8 +230,7 @@ bot.action('menu_home', (ctx) => {
   const userName = ctx.from.first_name || 'User';
 
   const welcomeMessage = 
-    '```javascript\n' +
-    `Halo ${userName} 👋\n` +
+    `<blockquote>Halo ${userName} 👋\n` +
     `Deploy Bot - Platform Deploy Otomatis\n` +
     `━━━━━━━━━━━━━━━━━━━━\n\n` +
     `Name   : ${userName}\n` +
@@ -251,12 +247,12 @@ bot.action('menu_home', (ctx) => {
     `"Pedagang yang jujur dan amanah akan\n` +
     `bersama para nabi, orang-orang\n` +
     `yang benar, dan para syuhada."\n` +
-    `(HR. Tirmidzi)\n` +
-    '```';
+    `(HR. Tirmidzi)</blockquote>`;
 
   // Menu untuk owner
   if (isOwner(userId)) {
     ctx.editMessageText(welcomeMessage, {
+      parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         [
           Markup.button.callback('🚀 Deploy Website', 'menu_deploy'),
@@ -278,6 +274,7 @@ bot.action('menu_home', (ctx) => {
   } else {
     // Menu untuk user biasa
     ctx.editMessageText(welcomeMessage, {
+      parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         [Markup.button.callback('🚀 Deploy Website', 'menu_deploy')],
         [
@@ -299,15 +296,14 @@ bot.action('menu_deploy', (ctx) => {
 
   if (remaining <= 0 && !isOwner(userId)) {
     return ctx.editMessageText(
-      '```javascript\n' +
-      '❌ Limit Deploy Habis!\n' +
+      '<blockquote>❌ Limit Deploy Habis!\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
       'Kamu tidak punya sisa limit deploy.\n\n' +
       '💡 Cara dapat limit tambahan:\n' +
       '• Join channel event = +2 limit per channel\n' +
-      '• Tunggu owner menambahkan event channel baru\n' +
-      '```',
+      '• Tunggu owner menambahkan event channel baru</blockquote>',
       {
+        parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
           [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
         ]),
@@ -326,17 +322,16 @@ bot.action('menu_deploy', (ctx) => {
     ctx.session.deployState = 'waiting_project_name';
 
     ctx.editMessageText(
-      '```javascript\n' +
-      '🟩 Deploy ke Netlify\n' +
-      '━━━━━━━━━━━━━━━━━━━━\n\n' +
+      `<blockquote>🟩 Deploy ke Netlify\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `📊 Sisa limit: ${remaining} deploy\n\n` +
-      'Ketik nama project kamu:\n\n' +
-      '📝 Contoh:\n' +
-      '• my-website\n' +
-      '• portofolio\n' +
-      '• landing-page\n' +
-      '```',
+      `Ketik nama project kamu:\n\n` +
+      `📝 Contoh:\n` +
+      `• my-website\n` +
+      `• portofolio\n` +
+      `• landing-page</blockquote>`,
       {
+        parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
           [Markup.button.callback('🔙 Batal', 'menu_home')],
         ]),
@@ -345,13 +340,12 @@ bot.action('menu_deploy', (ctx) => {
   } else {
     // Owner bisa pilih platform
     ctx.editMessageText(
-      '```javascript\n' +
-      '🚀 Deploy Website\n' +
-      '━━━━━━━━━━━━━━━━━━━━\n\n' +
+      `<blockquote>🚀 Deploy Website\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `📊 Sisa limit: ${remaining} deploy\n\n` +
-      'Pilih platform yang ingin kamu gunakan:\n' +
-      '```',
+      `Pilih platform yang ingin kamu gunakan:</blockquote>`,
       {
+        parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
           [
             Markup.button.callback('🔺 Vercel', 'platform_vercel'),
@@ -379,12 +373,11 @@ bot.action('menu_manage', (ctx) => {
   ctx.session.manageProjectUrl = null;
 
   ctx.editMessageText(
-    '```javascript\n' +
-    '⚙️ Kelola Project\n' +
+    '<blockquote>⚙️ Kelola Project\n' +
     '━━━━━━━━━━━━━━━━━━━━\n\n' +
-    'Pilih platform yang ingin kamu kelola:\n' +
-    '```',
+    'Pilih platform yang ingin kamu kelola:</blockquote>',
     {
+      parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         [
           Markup.button.callback('🔺 Vercel', 'mgr_platform_vercel'),
@@ -410,12 +403,11 @@ bot.action('menu_delete', (ctx) => {
   ctx.session.deleteProjectName = null;
 
   ctx.editMessageText(
-    '```javascript\n' +
-    '🗑️ Hapus Project\n' +
+    '<blockquote>🗑️ Hapus Project\n' +
     '━━━━━━━━━━━━━━━━━━━━\n\n' +
-    'Pilih platform:\n' +
-    '```',
+    'Pilih platform:</blockquote>',
     {
+      parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         [
           Markup.button.callback('🔺 Vercel', 'del_platform_vercel'),
@@ -439,13 +431,12 @@ bot.action('menu_event', (ctx) => {
 
   if (unjoinedChannels.length === 0) {
     return ctx.editMessageText(
-      '```javascript\n' +
-      '📭 Tidak ada event channel baru\n' +
+      '<blockquote>📭 Tidak ada event channel baru\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
       'Kamu sudah join semua channel event yang tersedia.\n' +
-      'Tunggu owner menambahkan channel baru ya!\n' +
-      '```',
+      'Tunggu owner menambahkan channel baru ya!</blockquote>',
       {
+        parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
           [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
         ]),
@@ -461,17 +452,16 @@ bot.action('menu_event', (ctx) => {
   buttons.push([Markup.button.callback('🏠 Menu Utama', 'menu_home')]);
 
   ctx.editMessageText(
-    '```javascript\n' +
-    '🎉 Event Channel Tersedia\n' +
+    '<blockquote>🎉 Event Channel Tersedia\n' +
     '━━━━━━━━━━━━━━━━━━━━\n\n' +
     'Join channel di bawah untuk mendapatkan\n' +
     '+2 limit deploy per channel!\n\n' +
     '📋 Langkah:\n' +
     '1️⃣ Klik tombol channel untuk join\n' +
     '2️⃣ Klik "✅ Verifikasi" setelah join\n' +
-    '3️⃣ Dapatkan limit tambahan!\n' +
-    '```',
+    '3️⃣ Dapatkan limit tambahan!</blockquote>',
     {
+      parse_mode: 'HTML',
       ...Markup.inlineKeyboard(buttons),
     }
   ).catch(() => {});
@@ -497,21 +487,21 @@ bot.action('menu_limit', (ctx) => {
   buttons.push([Markup.button.callback('🏠 Menu Utama', 'menu_home')]);
 
   ctx.editMessageText(
-    '```javascript\n' +
-    '📊 Deploy Limit\n' +
-    '━━━━━━━━━━━━━━━━━━━━\n\n' +
+    `<blockquote>📊 Deploy Limit\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n\n` +
     `Name   : ${userName}\n` +
     `Role   : ${roleText}\n` +
     `Status : ${emoji}\n` +
     `Limit  : ${remaining}\n` +
     `Id     : ${userId}\n\n` +
-    '📈 Statistik:\n' +
+    `📈 Statistik:\n` +
     `• Total limit  : ${user.deploy_limit}\n` +
     `• Sudah dipakai: ${user.deploy_used}\n` +
     `• Sisa         : ${remaining}` +
-    eventText + '\n' +
-    '```',
+    eventText +
+    `</blockquote>`,
     {
+      parse_mode: 'HTML',
       ...Markup.inlineKeyboard(buttons),
     }
   ).catch(() => {});
@@ -522,8 +512,7 @@ bot.action('menu_help', (ctx) => {
   const isOwnerUser = isOwner(userId);
 
   const helpMessage = isOwnerUser
-    ? '```javascript\n' +
-      '📚 Panduan Lengkap Deploy Bot\n' +
+    ? '<blockquote>📚 Panduan Lengkap Deploy Bot\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
       '🎯 Perintah Tersedia:\n\n' +
       '🚀 /deploy  - Deploy website baru\n' +
@@ -537,10 +526,8 @@ bot.action('menu_help', (ctx) => {
       '💡 Cara Dapat Limit Deploy:\n\n' +
       '• Join channel utama = +2 limit\n' +
       '• Join channel event = +2 limit per channel\n' +
-      '• Ketik /event untuk lihat channel tersedia\n' +
-      '```'
-    : '```javascript\n' +
-      '📚 Panduan Lengkap Deploy Bot\n' +
+      '• Ketik /event untuk lihat channel tersedia</blockquote>'
+    : '<blockquote>📚 Panduan Lengkap Deploy Bot\n' +
       '━━━━━━━━━━━━━━━━━━━━\n\n' +
       '🎯 Perintah Tersedia:\n\n' +
       '🚀 /deploy - Deploy website baru\n' +
@@ -550,8 +537,7 @@ bot.action('menu_help', (ctx) => {
       '💡 Cara Dapat Limit Deploy:\n\n' +
       '• Join channel utama = +2 limit\n' +
       '• Join channel event = +2 limit per channel\n' +
-      '• Tunggu owner menambahkan event channel baru\n' +
-      '```';
+      '• Tunggu owner menambahkan event channel baru</blockquote>';
 
   const buttons = isOwnerUser
     ? [
@@ -565,14 +551,14 @@ bot.action('menu_help', (ctx) => {
       ];
 
   ctx.editMessageText(helpMessage, {
+    parse_mode: 'HTML',
     ...Markup.inlineKeyboard(buttons),
   }).catch(() => {});
 });
 
 bot.action('menu_about', (ctx) => {
   const aboutMessage =
-    '```javascript\n' +
-    'ℹ️ Tentang Deploy Bot\n' +
+    '<blockquote>ℹ️ Tentang Deploy Bot\n' +
     '━━━━━━━━━━━━━━━━━━━━\n\n' +
     '🤖 Deploy Bot v2.0.0\n\n' +
     'Bot Telegram untuk deploy website secara otomatis\n' +
@@ -588,10 +574,10 @@ bot.action('menu_about', (ctx) => {
     '💼 Platform Support:\n\n' +
     '🔺 Vercel  - Edge Network\n' +
     '🟩 Netlify - CDN Global\n\n' +
-    'Made with ❤️ using Telegraf.js\n' +
-    '```';
+    'Made with ❤️ using Telegraf.js</blockquote>';
 
   ctx.editMessageText(aboutMessage, {
+    parse_mode: 'HTML',
     ...Markup.inlineKeyboard([
       [Markup.button.callback('🏠 Menu Utama', 'menu_home')],
     ]),
