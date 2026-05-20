@@ -193,50 +193,89 @@ async function updateNetlifySite(siteId, fileMap) {
 
 /**
  * Tambahkan custom domain ke site Netlify
+ * Menggunakan PATCH /sites/{site_id} dengan custom_domain atau domain_aliases
  */
 async function addNetlifyDomain(siteId, domain) {
   const token = process.env.NETLIFY_TOKEN;
   if (!token) throw new Error('NETLIFY_TOKEN belum diset di file .env');
 
-  // Ambil info site dulu untuk dapat nama site
-  const siteRes = await axios.get(`${BASE_URL}/sites/${siteId}`, {
-    headers: getHeaders(token),
-  });
-  const siteName = siteRes.data.name;
-
-  // Tambahkan custom domain ke site - gunakan endpoint yang benar
   try {
-    await axios.post(
-      `${BASE_URL}/sites/${siteId}/domains`,
-      { domain },
+    // Ambil info site dulu untuk dapat data yang ada
+    const siteRes = await axios.get(`${BASE_URL}/sites/${siteId}`, {
+      headers: getHeaders(token),
+    });
+    const siteName = siteRes.data.name;
+    const currentCustomDomain = siteRes.data.custom_domain;
+    const currentAliases = siteRes.data.domain_aliases || [];
+
+    let updatePayload = {};
+
+    if (!currentCustomDomain) {
+      // Belum ada custom domain → set sebagai custom_domain utama
+      updatePayload = { custom_domain: domain };
+    } else {
+      // Sudah ada custom_domain → tambahkan sebagai domain_aliases
+      const newAliases = [...currentAliases, domain];
+      updatePayload = { domain_aliases: newAliases };
+    }
+
+    // PATCH site untuk update domain
+    await axios.patch(
+      `${BASE_URL}/sites/${siteId}`,
+      updatePayload,
       { headers: getHeaders(token) }
     );
-  } catch (err) {
-    const msg = err.response?.data?.message || err.message;
-    throw new Error(`Gagal menambahkan domain ke Netlify: ${msg}`);
-  }
 
-  return {
-    domain,
-    cname: `${siteName}.netlify.app`,
-  };
+    return {
+      domain,
+      cname: `${siteName}.netlify.app`,
+    };
+  } catch (err) {
+    const msg = err.response?.data?.message || err.response?.data?.errors || err.message;
+    throw new Error(`Gagal menambahkan domain ke Netlify: ${typeof msg === 'object' ? JSON.stringify(msg) : msg}`);
+  }
 }
 
 /**
  * Hapus custom domain dari site Netlify
+ * Menggunakan PATCH /sites/{site_id} untuk menghapus dari custom_domain atau domain_aliases
  */
 async function removeNetlifyDomain(siteId, domain) {
   const token = process.env.NETLIFY_TOKEN;
   if (!token) throw new Error('NETLIFY_TOKEN belum diset di file .env');
 
   try {
-    await axios.delete(
-      `${BASE_URL}/sites/${siteId}/domains/${domain}`,
+    // Ambil info site dulu
+    const siteRes = await axios.get(`${BASE_URL}/sites/${siteId}`, {
+      headers: getHeaders(token),
+    });
+    const currentCustomDomain = siteRes.data.custom_domain;
+    const currentAliases = siteRes.data.domain_aliases || [];
+
+    let updatePayload = {};
+
+    if (currentCustomDomain === domain) {
+      // Domain yang dihapus adalah custom_domain utama
+      // Set custom_domain ke null/kosong
+      updatePayload = { custom_domain: null };
+    } else if (currentAliases.includes(domain)) {
+      // Domain ada di aliases → hapus dari array
+      const newAliases = currentAliases.filter((d) => d !== domain);
+      updatePayload = { domain_aliases: newAliases };
+    } else {
+      throw new Error(`Domain ${domain} tidak ditemukan di site ini.`);
+    }
+
+    // PATCH site untuk update
+    await axios.patch(
+      `${BASE_URL}/sites/${siteId}`,
+      updatePayload,
       { headers: getHeaders(token) }
     );
   } catch (err) {
-    const msg = err.response?.data?.message || err.message;
-    throw new Error(`Gagal menghapus domain dari Netlify: ${msg}`);
+    if (err.message.includes('tidak ditemukan')) throw err;
+    const msg = err.response?.data?.message || err.response?.data?.errors || err.message;
+    throw new Error(`Gagal menghapus domain dari Netlify: ${typeof msg === 'object' ? JSON.stringify(msg) : msg}`);
   }
 }
 
